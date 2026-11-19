@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0F172A" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Family Hub — Planner & Dashboard</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    @media (min-width: 1536px) {
+      html { font-size: 18px; } /* Auto-scale typography for 10-foot TV viewing */
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-900 min-h-screen transition-colors duration-200" id="appBody">
+
+  <!-- Top Header -->
+  <header id="topBar" class="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-sky-600 text-white flex items-center justify-center shadow-sm">
+        <i data-lucide="calendar-heart" class="w-5 h-5"></i>
+      </div>
+      <div>
+        <h1 class="font-bold text-base sm:text-lg leading-tight tracking-tight">Family Hub</h1>
+        <p id="liveClock" class="text-xs text-slate-500 font-medium"></p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <!-- Connection Badge -->
+      <button onclick="openSettings()" id="syncStatusBtn" class="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition">
+        <span id="syncDot" class="w-2 h-2 rounded-full bg-amber-500"></span>
+        <span id="syncLabel">Demo Mode</span>
+      </button>
+
+      <!-- Manual Refresh -->
+      <button onclick="syncWithBackend(true)" title="Sync Now" class="p-2 rounded-lg hover:bg-slate-200/70 text-slate-600 transition">
+        <i data-lucide="refresh-cw" id="refreshIcon" class="w-4 h-4"></i>
+      </button>
+
+      <!-- Dark TV Wall Mode Toggle -->
+      <button onclick="toggleDarkMode()" title="Toggle TV Dark Mode" class="p-2 rounded-lg hover:bg-slate-200/70 text-slate-600 transition">
+        <i data-lucide="moon" id="themeIcon" class="w-4 h-4"></i>
+      </button>
+
+      <!-- Settings -->
+      <button onclick="openSettings()" title="Settings & Google Sync" class="p-2 rounded-lg hover:bg-slate-200/70 text-slate-600 transition">
+        <i data-lucide="settings" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Responsive Container -->
+  <!-- Mobile: Single column starting with Today's Focus, bottom nav switches to Month/Meals -->
+  <!-- Tablet & TV (md+): Split view with Monthly Calendar on Left, Today's Focus + Lists on Right -->
+  <main class="max-w-[1800px] mx-auto p-3 sm:p-5 pb-24 md:pb-6 grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-5">
+
+    <!-- LEFT COLUMN (Desktop/Tablet: Monthly Calendar + Weekly Meal Strip | Mobile: Shown when 'Month' or 'Meals' tab active) -->
+    <section id="leftColumn" class="hidden md:flex md:col-span-6 lg:col-span-6 flex-col gap-4 sm:gap-5">
+
+      <!-- Monthly Calendar Card -->
+      <div id="calendarCard" class="card bg-white rounded-2xl shadow-sm border border-slate-200/80 p-4 sm:p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <button onclick="changeMonth(-1)" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600"><i data-lucide="chevron-left" class="w-5 h-5"></i></button>
+            <h2 id="calendarMonthTitle" class="font-bold text-lg tracking-tight min-w-[160px] text-center">November 2026</h2>
+            <button onclick="changeMonth(1)" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600"><i data-lucide="chevron-right" class="w-5 h-5"></i></button>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="jumpToToday()" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700">Today</button>
+            <button onclick="openEventModal()" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white flex items-center gap-1 shadow-sm">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Event
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-7 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+          <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+        </div>
+        <div id="calendarGrid" class="grid grid-cols-7 gap-1 sm:gap-1.5"></div>
+
+        <!-- Mobile Selected Day Agenda Drawer (Visible only on Phone below calendar grid) -->
+        <div id="mobileMonthAgenda" class="md:hidden mt-4 pt-4 border-t border-slate-200/80">
+          <div class="flex items-center justify-between mb-2.5">
+            <div>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-sky-600">Selected Date</span>
+              <h3 id="mobileAgendaDateTitle" class="font-bold text-sm text-slate-900">Thursday, Nov 19</h3>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button onclick="openEventModal()" class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-sky-50 text-sky-700 hover:bg-sky-100 flex items-center gap-1">
+                <i data-lucide="plus" class="w-3 h-3"></i> Event
+              </button>
+              <button onclick="switchMobileTab('today')" class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-900 text-white flex items-center gap-1">
+                <span>Full Focus</span>
+                <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
+              </button>
+            </div>
+          </div>
+          <div id="mobileAgendaBody" class="space-y-2"></div>
+        </div>
+      </div>
+
+      <!-- Weekly Meal Schedule & Generator Card -->
+      <div id="mealPlanCard" class="card bg-white rounded-2xl shadow-sm border border-slate-200/80 p-4 sm:p-5">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div>
+            <h2 class="font-bold text-base sm:text-lg flex items-center gap-2">
+              <i data-lucide="utensils" class="w-4 h-4 text-emerald-600"></i>
+              <span>Weekly Meal Plan</span>
+            </h2>
+            <p class="text-xs text-slate-500">Auto-scheduled around busy calendar evenings</p>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button onclick="openMealRules()" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center gap-1">
+              <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> Rules & Pool
+            </button>
+            <button onclick="generateWeeklyMeals()" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1 shadow-sm">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Generate
+            </button>
+          </div>
+        </div>
+
+        <div id="weeklyMealList" class="space-y-2"></div>
+
+        <button onclick="pushWeekIngredientsToGroceries()" class="mt-3 w-full py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+          <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
+          <span>Add This Week's Missing Ingredients to Grocery List</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- RIGHT COLUMN (Always visible first on Mobile; Right half on Tablet/TV) -->
+    <section id="rightColumn" class="md:col-span-6 lg:col-span-6 flex flex-col gap-4 sm:gap-5">
+
+      <!-- HERO CARD: TODAY'S FOCUS (Always First Across Phone, Tablet & TV) -->
+      <div id="todayHeroCard" class="rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-sky-950 text-white p-4 sm:p-6 shadow-md border border-slate-700/60">
+        <div class="flex items-start justify-between gap-2 mb-4">
+          <div>
+            <span id="selectedDayBadge" class="inline-block text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400/30 mb-1">Today's Focus</span>
+            <h2 id="heroDateTitle" class="text-xl sm:text-2xl font-extrabold tracking-tight">Wednesday, Nov 18</h2>
+          </div>
+          <button onclick="openEventModal()" class="text-xs font-semibold px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center gap-1 backdrop-blur transition">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Quick Add
+          </button>
+        </div>
+
+        <!-- Today's Appointments & Events -->
+        <div class="mb-4">
+          <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
+            <i data-lucide="clock" class="w-3.5 h-3.5 text-sky-400"></i>
+            <span>Schedule & Appointments</span>
+          </div>
+          <div id="heroEventsList" class="space-y-2"></div>
+        </div>
+
+        <!-- Today's Meals with Details & Ingredients -->
+        <div class="pt-3 border-t border-white/10">
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <i data-lucide="chef-hat" class="w-3.5 h-3.5 text-emerald-400"></i>
+              <span>Today's Menu</span>
+            </div>
+            <button onclick="swapDayMeals()" class="text-xs text-emerald-300 hover:text-emerald-200 font-semibold flex items-center gap-1">
+              <i data-lucide="shuffle" class="w-3 h-3"></i> Swap Today
+            </button>
+          </div>
+          <div id="heroMealsList" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+        </div>
+      </div>
+
+      <!-- LISTS SPLIT: TO-DO LIST & SMART GROCERY LIST -->
+      <div id="listsContainer" class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+
+        <!-- Family To-Do List -->
+        <div class="card bg-white rounded-2xl shadow-sm border border-slate-200/80 p-4 sm:p-5 flex flex-col">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-base flex items-center gap-2">
+              <i data-lucide="check-square" class="w-4 h-4 text-indigo-600"></i>
+              <span>Family To-Do</span>
+              <span id="todoCountBadge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">0</span>
+            </h3>
+            <span id="cleanupHintTodo" class="text-[11px] text-slate-400">Clears midnight</span>
+          </div>
+
+          <form onsubmit="handleAddItem(event, 'todo')" class="flex gap-2 mb-3">
+            <input id="todoInput" type="text" placeholder="Add task..." required
+              class="flex-1 text-sm px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <button type="submit" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm">Add</button>
+          </form>
+
+          <div id="todoListEl" class="space-y-1.5 flex-1 max-h-[340px] overflow-y-auto no-scrollbar"></div>
+        </div>
+
+        <!-- Smart Auto-Classified Grocery List -->
+        <div class="card bg-white rounded-2xl shadow-sm border border-slate-200/80 p-4 sm:p-5 flex flex-col">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-base flex items-center gap-2">
+              <i data-lucide="shopping-bag" class="w-4 h-4 text-amber-600"></i>
+              <span>Groceries</span>
+              <span id="groceryCountBadge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">0</span>
+            </h3>
+            <span class="text-[11px] text-slate-400">Auto-sorted by aisle</span>
+          </div>
+
+          <!-- Single-step input: no manual category selection -->
+          <form onsubmit="handleAddItem(event, 'grocery')" class="flex gap-2 mb-3">
+            <input id="groceryInput" type="text" placeholder="Add item (e.g., Paneer, Spinach)..." required
+              class="flex-1 text-sm px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <button type="submit" class="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-sm">Add</button>
+          </form>
+
+          <div id="groceryListEl" class="space-y-3 flex-1 max-h-[340px] overflow-y-auto no-scrollbar"></div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- Mobile Bottom Navigation Bar (Hidden on Tablet/TV md+) -->
+  <nav id="mobileBottomNav" class="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-slate-200 grid grid-cols-3 py-2 px-3 shadow-lg">
+    <button onclick="switchMobileTab('today')" id="nav-today" class="flex flex-col items-center gap-1 text-sky-600 font-bold text-xs">
+      <i data-lucide="sparkles" class="w-5 h-5"></i>
+      <span>Today & Lists</span>
+    </button>
+    <button onclick="switchMobileTab('month')" id="nav-month" class="flex flex-col items-center gap-1 text-slate-500 font-medium text-xs">
+      <i data-lucide="calendar" class="w-5 h-5"></i>
+      <span>Month</span>
+    </button>
+    <button onclick="switchMobileTab('meals')" id="nav-meals" class="flex flex-col items-center gap-1 text-slate-500 font-medium text-xs">
+      <i data-lucide="utensils" class="w-5 h-5"></i>
+      <span>Meal Plan</span>
+    </button>
+  </nav>
+
+  <!-- MODAL: Add Calendar Event -->
+  <div id="eventModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white text-slate-900 rounded-2xl max-w-md w-full p-5 shadow-xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-lg">Add Family Event</h3>
+        <button onclick="closeModal('eventModal')" class="p-1 rounded-lg hover:bg-slate-100"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <form onsubmit="submitNewEvent(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Event Title</label>
+          <input id="evTitle" type="text" required placeholder="e.g., Pediatrician checkup, Dinner with friends" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200" />
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Date</label>
+            <input id="evDate" type="date" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Start Time</label>
+            <input id="evTime" type="time" value="10:00" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Location (Optional)</label>
+          <input id="evLocation" type="text" placeholder="e.g., Zaandam Centrum" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200" />
+        </div>
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeModal('eventModal')" class="px-4 py-2 text-sm font-semibold rounded-xl bg-slate-100">Cancel</button>
+          <button type="submit" class="px-4 py-2 text-sm font-semibold rounded-xl bg-sky-600 text-white hover:bg-sky-700">Save to Calendar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Meal Generator Rules & Dish Pool -->
+  <div id="mealRulesModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white text-slate-900 rounded-2xl max-w-2xl w-full p-5 shadow-xl max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-lg">Meal Plan Rules & Family Recipe Pool</h3>
+        <button onclick="closeModal('mealRulesModal')" class="p-1 rounded-lg hover:bg-slate-100"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Meals to Plan</label>
+            <select id="ruleMealScope" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-white">
+              <option value="both">Lunch & Dinner</option>
+              <option value="dinner">Dinner Only</option>
+            </select>
+          </div>
+          <div class="flex flex-col justify-center gap-2 text-xs font-semibold text-slate-700">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input id="ruleBusyQuick" type="checkbox" checked class="rounded text-emerald-600" />
+              <span>Prioritize Quick (&lt;25m) on busy calendar days</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input id="ruleWeekendSpecial" type="checkbox" checked class="rounded text-emerald-600" />
+              <span>Save Weekend Specials for Sat/Sun</span>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Preferred Cuisines (Click to Toggle)</label>
+          <div id="cuisineChips" class="flex flex-wrap gap-1.5"></div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Dish Types (Click to Toggle)</label>
+          <div id="typeChips" class="flex flex-wrap gap-1.5"></div>
+        </div>
+
+        <!-- Add New Dish to Pool -->
+        <div class="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200">
+          <h4 class="text-xs font-bold text-emerald-900 uppercase tracking-wider mb-2">Add Dish to Family Pool</h4>
+          <form onsubmit="submitNewDish(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+            <input id="dishName" type="text" required placeholder="Dish name (e.g., Aloo Paratha & Curd)" class="sm:col-span-5 text-xs px-2.5 py-2 rounded-lg border border-emerald-200 bg-white" />
+            <select id="dishCuisine" class="sm:col-span-3 text-xs px-2 py-2 rounded-lg border border-emerald-200 bg-white">
+              <option>Indian</option><option>Italian</option><option>Asian</option><option>Mexican</option><option>Mediterranean</option><option>Dutch</option>
+            </select>
+            <select id="dishType" class="sm:col-span-4 text-xs px-2 py-2 rounded-lg border border-emerald-200 bg-white">
+              <option>Quick (&lt;25m)</option><option>Curry &amp; Rice</option><option>Pasta / Noodles</option><option>One-Pot</option><option>Weekend Special</option>
+            </select>
+            <input id="dishIngredients" type="text" required placeholder="Main ingredients (comma-separated)..." class="sm:col-span-9 text-xs px-2.5 py-2 rounded-lg border border-emerald-200 bg-white" />
+            <button type="submit" class="sm:col-span-3 text-xs font-bold py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">+ Add Dish</button>
+          </form>
+        </div>
+
+        <!-- Current Dish Pool List -->
+        <div>
+          <h4 class="text-xs font-bold text-slate-700 mb-1.5">Active Family Dishes (<span id="poolCount">0</span>)</h4>
+          <div id="mealPoolList" class="max-h-40 overflow-y-auto divide-y divide-slate-100 border border-slate-200 rounded-xl text-xs"></div>
+        </div>
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-slate-200 flex justify-end gap-2">
+        <button onclick="saveRulesAndRegenerate()" class="px-4 py-2 text-sm font-semibold rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Save Rules & Regenerate Week</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Settings & Google Apps Script Connection -->
+  <div id="settingsModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white text-slate-900 rounded-2xl max-w-lg w-full p-5 shadow-xl max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-lg">Google Sync & Cleanup Settings</h3>
+        <button onclick="closeModal('settingsModal')" class="p-1 rounded-lg hover:bg-slate-100"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="space-y-4 text-sm">
+        <div class="p-3 rounded-xl bg-sky-50 border border-sky-200">
+          <h4 class="font-bold text-sky-900 text-xs uppercase tracking-wider mb-2">1. Google Apps Script Connection</h4>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Web App URL (from Apps Script Deploy)</label>
+          <input id="cfgScriptUrl" type="url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-3 py-2 text-xs rounded-lg border border-sky-200 bg-white mb-2" />
+
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Family API Secret PIN</label>
+          <input id="cfgApiToken" type="password" placeholder="Must match API_SECRET in Code.gs" class="w-full px-3 py-2 text-xs rounded-lg border border-sky-200 bg-white mb-2" />
+
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Google Calendar IDs (comma-separated)</label>
+          <input id="cfgCalendarIds" type="text" value="simarwalia09@gmail.com" class="w-full px-3 py-2 text-xs rounded-lg border border-sky-200 bg-white" />
+          <p class="text-[11px] text-slate-500 mt-1">Default is your shared calendar (simarwalia09@gmail.com). Add your own email separated by a comma to merge both.</p>
+        </div>
+
+        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+          <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider mb-2">2. Completed Item Auto-Cleanup</h4>
+          <select id="cfgCleanupMode" class="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 bg-white mb-2">
+            <option value="midnight">Auto-remove checked items at Midnight (Recommended)</option>
+            <option value="24h">Auto-remove 24 hours after checked</option>
+            <option value="manual">Keep checked items until manually cleared</option>
+          </select>
+          <button onclick="triggerCleanupNow()" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800">
+            Clear All Checked Items Now
+          </button>
+        </div>
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-slate-200 flex justify-end gap-2">
+        <button onclick="closeModal('settingsModal')" class="px-4 py-2 text-sm font-semibold rounded-xl bg-slate-100">Cancel</button>
+        <button onclick="saveSettings()" class="px-4 py-2 text-sm font-semibold rounded-xl bg-sky-600 text-white hover:bg-sky-700">Save & Sync</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // STATE & DEFAULT DATA (Lacto-Vegetarian)
+    // ==========================================
+    const ALL_CUISINES = ["Indian", "Italian", "Asian", "Mexican", "Mediterranean", "Dutch"];
+    const ALL_TYPES = ["Quick (<25m)", "Curry & Rice", "Pasta / Noodles", "One-Pot", "Weekend Special"];
+
+    const DEFAULT_MEALS = [
+      { ID: "M01", Name: "Palak Paneer & Jeera Rice", Cuisine: "Indian", Type: "Curry & Rice", Prep_Mins: 30, Ingredients: "Spinach, Paneer, Basmati Rice, Cumin, Ginger, Garlic, Cream" },
+      { ID: "M02", Name: "Dal Tadka, Roti & Cucumber Raita", Cuisine: "Indian", Type: "Curry & Rice", Prep_Mins: 25, Ingredients: "Toor Dal, Whole Wheat Flour, Yogurt, Cucumber, Ghee" },
+      { ID: "M03", Name: "Creamy Pesto Fusilli & Roasted Zucchini", Cuisine: "Italian", Type: "Pasta / Noodles", Prep_Mins: 20, Ingredients: "Fusilli Pasta, Basil Pesto, Zucchini, Cherry Tomatoes, Parmesan" },
+      { ID: "M04", Name: "Crispy Tofu & Veggie Peanut Noodles", Cuisine: "Asian", Type: "Quick (<25m)", Prep_Mins: 20, Ingredients: "Firm Tofu, Rice Noodles, Bell Pepper, Broccoli, Peanut Butter" },
+      { ID: "M05", Name: "Black Bean & Sweet Potato Quesadillas", Cuisine: "Mexican", Type: "Quick (<25m)", Prep_Mins: 25, Ingredients: "Flour Tortillas, Black Beans, Sweet Potato, Cheddar, Salsa, Avocado" },
+      { ID: "M06", Name: "Chickpea & Spinach Tomato Skillet", Cuisine: "Mediterranean", Type: "One-Pot", Prep_Mins: 25, Ingredients: "Chickpeas, Crushed Tomatoes, Baby Spinach, Feta, Sourdough Bread" },
+      { ID: "M07", Name: "Chole, Pita & Fresh Mint Chutney", Cuisine: "Indian", Type: "Weekend Special", Prep_Mins: 45, Ingredients: "Chickpeas, Onion, Tomato, Chole Masala, Fresh Mint, Pita" },
+      { ID: "M08", Name: "Margherita Flatbread & Caprese Salad", Cuisine: "Italian", Type: "Quick (<25m)", Prep_Mins: 15, Ingredients: "Flatbread Base, Fresh Mozzarella, Tomato Passata, Fresh Basil" },
+      { ID: "M09", Name: "Thai Green Veggie Curry & Jasmine Rice", Cuisine: "Asian", Type: "Curry & Rice", Prep_Mins: 30, Ingredients: "Green Curry Paste, Coconut Milk, Tofu, Snow Peas, Jasmine Rice" },
+      { ID: "M10", Name: "Boerenkool Stamppot & Veg Rookworst", Cuisine: "Dutch", Type: "One-Pot", Prep_Mins: 35, Ingredients: "Potatoes, Curly Kale, Vegetarian Rookworst, Butter, Milk" }
+    ];
+
+    let state = {
+      scriptUrl: localStorage.getItem("fh_scriptUrl") || "",
+      apiToken: localStorage.getItem("fh_apiToken") || "",
+      calendarIds: localStorage.getItem("fh_calendarIds") || "simarwalia09@gmail.com",
+      cleanupMode: localStorage.getItem("fh_cleanupMode") || "midnight",
+      darkMode: localStorage.getItem("fh_darkMode") === "true",
+      selectedDate: formatDateISO(new Date()),
+      viewYear: new Date().getFullYear(),
+      viewMonth: new Date().getMonth(),
+      mobileTab: "today",
+      rules: JSON.parse(localStorage.getItem("fh_rules") || "null") || {
+        scope: "both",
+        busyQuick: true,
+        weekendSpecial: true,
+        cuisines: [...ALL_CUISINES],
+        types: [...ALL_TYPES]
+      },
+      meals: JSON.parse(localStorage.getItem("fh_meals") || "null") || DEFAULT_MEALS,
+      schedule: JSON.parse(localStorage.getItem("fh_schedule") || "null") || [],
+      events: JSON.parse(localStorage.getItem("fh_events") || "null") || getSeedEvents(),
+      lists: JSON.parse(localStorage.getItem("fh_lists") || "null") || getSeedLists()
+    };
+
+    function getSeedEvents() {
+      const today = formatDateISO(new Date());
+      return [
+        { id: "e1", title: "Ayra School Drop-off", start: today + "T08:30:00", end: today + "T09:00:00", location: "Primary School", colorIndex: 0 },
+        { id: "e2", title: "Xavi Pediatric Checkup", start: today + "T14:30:00", end: today + "T15:15:00", location: "Consultatiebureau Zaandam", colorIndex: 1 },
+        { id: "e3", title: "Gym Session", start: today + "T18:00:00", end: today + "T19:00:00", location: "Local Gym", colorIndex: 0 }
+      ];
+    }
+
+    function getSeedLists() {
+      return [
+        { ID: "T1", List_Type: "todo", Text: "Renew Ayra's swimming class", Category: "General", Done: false, Completed_At: "" },
+        { ID: "T2", List_Type: "todo", Text: "Order Xavi's winter sleeping bag", Category: "General", Done: false, Completed_At: "" },
+        { ID: "G1", List_Type: "grocery", Text: "Baby spinach (2 bags)", Category: "Produce", Done: false, Completed_At: "" },
+        { ID: "G2", List_Type: "grocery", Text: "Paneer (2 blocks)", Category: "Dairy & Fridge", Done: false, Completed_At: "" },
+        { ID: "G3", List_Type: "grocery", Text: "Sourdough bread", Category: "Bakery & Grains", Done: false, Completed_At: "" }
+      ];
+    }
+
+    // ==========================================
+    // SMART GROCERY AUTO-CLASSIFIER (Zero User Input)
+    // ==========================================
+    function autoClassifyGrocery(itemText) {
+      const t = itemText.toLowerCase();
+      if (/(spinach|tomato|onion|potato|kale|broccoli|pepper|zucchini|cucumber|mint|basil|avocado|apple|banana|fruit|veg|carrot|garlic|ginger|lemon|lime|coriander|cilantro)/.test(t)) {
+        return "Produce";
+      }
+      if (/(milk|paneer|yogurt|curd|cheese|butter|cream|mozzarella|feta|cheddar|parmesan|tofu|ghee)/.test(t)) {
+        return "Dairy & Fridge";
+      }
+      if (/(bread|roti|tortilla|pita|flatbread|rice|pasta|fusilli|noodle|flour|oats|cereal|quinoa)/.test(t)) {
+        return "Bakery & Grains";
+      }
+      if (/(soap|detergent|paper|tissue|diaper|wipe|shampoo|toothpaste|trash|sponge|cleaner)/.test(t)) {
+        return "Household";
+      }
+      return "Pantry & Spices";
+    }
+
+    // ==========================================
+    // AUTO-CLEANUP ENGINE (Midnight / 24h / Manual)
+    // ==========================================
+    function runLocalCleanup() {
+      if (state.cleanupMode === "manual") return;
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      const before = state.lists.length;
+
+      state.lists = state.lists.filter(item => {
+        if (!item.Done) return true;
+        if (!item.Completed_At) return true;
+        const doneTs = new Date(item.Completed_At).getTime();
+        if (state.cleanupMode === "midnight") return doneTs >= startOfToday;
+        if (state.cleanupMode === "24h") return (now.getTime() - doneTs) < 24 * 60 * 60 * 1000;
+        return true;
+      });
+
+      if (state.lists.length !== before) persistLocal();
+    }
+
+    // ==========================================
+    // MEAL PLAN GENERATOR
+    // ==========================================
+    function ensureScheduleForWeek() {
+      const today = new Date();
+      const existingDates = new Set(state.schedule.map(s => s.Date));
+      let added = false;
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() + i);
+        const iso = formatDateISO(d);
+        if (!existingDates.has(iso)) {
+          const picked = pickMealsForDate(iso, []);
+          state.schedule.push({ Date: iso, ...picked });
+          added = true;
+        }
+      }
+      if (added) persistLocal();
+    }
+
+    function pickMealsForDate(dateISO, recentIds) {
+      const d = new Date(dateISO + "T12:00:00");
+      const isWeekend = (d.getDay() === 0 || d.getDay() === 6);
+      const dayEvents = state.events.filter(e => e.start.startsWith(dateISO));
+      const isBusy = dayEvents.length >= 2;
+
+      let pool = state.meals.filter(m =>
+        state.rules.cuisines.includes(m.Cuisine) &&
+        state.rules.types.includes(m.Type)
+      );
+      if (pool.length === 0) pool = [...state.meals];
+
+      const chooseOne = (excludeIds, preferQuick, preferSpecial) => {
+        let candidates = pool.filter(m => !excludeIds.includes(m.ID));
+        if (candidates.length === 0) candidates = pool;
+
+        if (preferQuick && state.rules.busyQuick) {
+          const quick = candidates.filter(m => m.Prep_Mins <= 25 || m.Type === "Quick (<25m)");
+          if (quick.length) candidates = quick;
+        } else if (preferSpecial && state.rules.weekendSpecial) {
+          const special = candidates.filter(m => m.Type === "Weekend Special");
+          if (special.length) candidates = special;
+        }
+        return candidates[Math.floor(Math.random() * candidates.length)];
+      };
+
+      const lunch = state.rules.scope === "both" ? chooseOne(recentIds, true, false) : null;
+      const dinner = chooseOne([...recentIds, lunch ? lunch.ID : ""], isBusy, isWeekend);
+
+      return {
+        Lunch_ID: lunch ? lunch.ID : "",
+        Lunch_Name: lunch ? lunch.Name : "",
+        Dinner_ID: dinner ? dinner.ID : "",
+        Dinner_Name: dinner ? dinner.Name : ""
+      };
+    }
+
+    async function generateWeeklyMeals() {
+      const today = new Date();
+      const newSchedule = [];
+      const usedIds = [];
+
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() + i);
+        const iso = formatDateISO(d);
+        const picked = pickMealsForDate(iso, usedIds.slice(-4));
+        if (picked.Lunch_ID) usedIds.push(picked.Lunch_ID);
+        if (picked.Dinner_ID) usedIds.push(picked.Dinner_ID);
+        newSchedule.push({ Date: iso, ...picked });
+      }
+
+      state.schedule = newSchedule;
+      persistLocal();
+      renderAll();
+
+      if (state.scriptUrl) {
+        await callBackend("saveSchedule", { schedule: state.schedule });
+      }
+    }
+
+    async function swapDayMeals() {
+      const iso = state.selectedDate;
+      const current = state.schedule.find(s => s.Date === iso);
+      const exclude = current ? [current.Lunch_ID, current.Dinner_ID] : [];
+      const picked = pickMealsForDate(iso, exclude);
+
+      const idx = state.schedule.findIndex(s => s.Date === iso);
+      if (idx >= 0) state.schedule[idx] = { Date: iso, ...picked };
+      else state.schedule.push({ Date: iso, ...picked });
+
+      persistLocal();
+      renderAll();
+      if (state.scriptUrl) {
+        await callBackend("saveSchedule", { schedule: state.schedule });
+      }
+    }
+
+    async function pushWeekIngredientsToGroceries() {
+      const existingLower = new Set(state.lists.filter(i => i.List_Type === "grocery" && !i.Done).map(i => i.Text.toLowerCase()));
+      let addedCount = 0;
+
+      for (const day of state.schedule.slice(0, 7)) {
+        const mealObjs = [
+          state.meals.find(m => m.ID === day.Lunch_ID),
+          state.meals.find(m => m.ID === day.Dinner_ID)
+        ].filter(Boolean);
+
+        for (const meal of mealObjs) {
+          const items = (meal.Ingredients || "").split(",").map(s => s.trim()).filter(Boolean);
+          for (const ing of items) {
+            if (!existingLower.has(ing.toLowerCase())) {
+              existingLower.add(ing.toLowerCase());
+              const cat = autoClassifyGrocery(ing);
+              const newItem = {
+                ID: "G" + Date.now() + Math.floor(Math.random() * 999),
+                List_Type: "grocery",
+                Text: ing,
+                Category: cat,
+                Done: false,
+                Completed_At: ""
+              };
+              state.lists.push(newItem);
+              addedCount++;
+              if (state.scriptUrl) {
+                callBackend("addListItem", { listType: "grocery", text: ing, category: cat, addedBy: "MealPlan" });
+              }
+            }
+          }
+        }
+      }
+
+      persistLocal();
+      renderAll();
+      alert(addedCount > 0 ? `Added ${addedCount} missing ingredients to your Grocery list!` : "All ingredients for this week are already on your Grocery list.");
+    }
+
+    // ==========================================
+    // RENDERING UI
+    // ==========================================
+    function renderAll() {
+      runLocalCleanup();
+      renderHero();
+      renderCalendar();
+      renderMobileMonthAgenda();
+      renderWeeklyMeals();
+      renderLists();
+      applyTheme();
+      lucide.createIcons();
+    }
+
+    function renderMobileMonthAgenda() {
+      const iso = state.selectedDate;
+      const d = new Date(iso + "T12:00:00");
+      const titleEl = document.getElementById("mobileAgendaDateTitle");
+      const bodyEl = document.getElementById("mobileAgendaBody");
+      if (!titleEl || !bodyEl) return;
+
+      titleEl.textContent = d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+
+      const dayEvents = state.events.filter(e => e.start.startsWith(iso));
+      const sched = state.schedule.find(s => s.Date === iso);
+
+      let parts = [];
+      if (dayEvents.length === 0) {
+        parts.push(`<div class="text-xs text-slate-400 bg-slate-50 rounded-xl px-3 py-2">No events on this day.</div>`);
+      } else {
+        dayEvents.forEach(ev => {
+          const timeStr = ev.allDay ? "All Day" : new Date(ev.start).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+          const dotColor = ev.colorIndex === 1 ? "bg-pink-500" : "bg-sky-500";
+          parts.push(`
+            <div class="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2 border border-slate-200/70">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-2 h-2 rounded-full ${dotColor} shrink-0"></span>
+                <div class="truncate">
+                  <div class="text-xs font-semibold truncate">${escapeHtml(ev.title)}</div>
+                  ${ev.location ? `<div class="text-[10px] text-slate-500 truncate">${escapeHtml(ev.location)}</div>` : ""}
+                </div>
+              </div>
+              <span class="text-[11px] font-bold text-sky-700 bg-sky-100 px-2 py-0.5 rounded-md shrink-0 ml-2">${timeStr}</span>
+            </div>
+          `);
+        });
+      }
+
+      if (sched && (sched.Dinner_Name || sched.Lunch_Name)) {
+        const mealSummary = [
+          state.rules.scope === "both" && sched.Lunch_Name ? `Lunch: ${sched.Lunch_Name}` : "",
+          sched.Dinner_Name ? `Dinner: ${sched.Dinner_Name}` : ""
+        ].filter(Boolean).join(" • ");
+        parts.push(`
+          <div class="flex items-center gap-2 bg-emerald-50/70 text-emerald-900 rounded-xl px-3 py-2 border border-emerald-200/70 text-xs">
+            <i data-lucide="utensils" class="w-3.5 h-3.5 text-emerald-600 shrink-0"></i>
+            <span class="truncate font-medium">${escapeHtml(mealSummary)}</span>
+          </div>
+        `);
+      }
+
+      bodyEl.innerHTML = parts.join("");
+    }
+
+    function renderHero() {
+      const iso = state.selectedDate;
+      const todayISO = formatDateISO(new Date());
+      const d = new Date(iso + "T12:00:00");
+      document.getElementById("selectedDayBadge").textContent = iso === todayISO ? "Today's Focus" : "Selected Day Focus";
+      document.getElementById("heroDateTitle").textContent = d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+
+      // Events
+      const evContainer = document.getElementById("heroEventsList");
+      const dayEvents = state.events.filter(e => e.start.startsWith(iso));
+      if (dayEvents.length === 0) {
+        evContainer.innerHTML = `<div class="text-xs text-slate-400 bg-white/5 rounded-xl px-3 py-2.5">No appointments scheduled for this day.</div>`;
+      } else {
+        evContainer.innerHTML = dayEvents.map(ev => {
+          const timeStr = ev.allDay ? "All Day" : new Date(ev.start).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+          const dotColor = ev.colorIndex === 1 ? "bg-pink-400" : "bg-sky-400";
+          return `
+            <div class="flex items-center justify-between bg-white/10 rounded-xl px-3 py-2 border border-white/10">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <span class="w-2.5 h-2.5 rounded-full ${dotColor} shrink-0"></span>
+                <div class="truncate">
+                  <div class="text-sm font-semibold text-white truncate">${escapeHtml(ev.title)}</div>
+                  ${ev.location ? `<div class="text-[11px] text-slate-300 truncate">${escapeHtml(ev.location)}</div>` : ""}
+                </div>
+              </div>
+              <span class="text-xs font-bold text-sky-300 bg-sky-950/80 px-2 py-1 rounded-lg shrink-0 ml-2">${timeStr}</span>
+            </div>
+          `;
+        }).join("");
+      }
+
+      // Meals
+      const mealsContainer = document.getElementById("heroMealsList");
+      const sched = state.schedule.find(s => s.Date === iso);
+      const lunchObj = sched ? state.meals.find(m => m.ID === sched.Lunch_ID || m.Name === sched.Lunch_Name) : null;
+      const dinnerObj = sched ? state.meals.find(m => m.ID === sched.Dinner_ID || m.Name === sched.Dinner_Name) : null;
+
+      const renderMealBox = (label, mealObj, fallbackName) => {
+        const title = mealObj ? mealObj.Name : (fallbackName || "Not planned yet");
+        const meta = mealObj ? `${mealObj.Cuisine} • ${mealObj.Prep_Mins}m` : "Tap Swap to assign";
+        const ing = mealObj ? mealObj.Ingredients : "";
+        return `
+          <div class="bg-white/10 rounded-xl p-3 border border-white/10">
+            <div class="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-emerald-300 mb-1">
+              <span>${label}</span>
+              <span class="text-slate-300 font-medium normal-case">${meta}</span>
+            </div>
+            <div class="text-sm font-bold text-white leading-snug">${escapeHtml(title)}</div>
+            ${ing ? `<div class="text-[11px] text-slate-300 mt-1 line-clamp-2">${escapeHtml(ing)}</div>` : ""}
+          </div>
+        `;
+      };
+
+      mealsContainer.innerHTML = (state.rules.scope === "both" ? renderMealBox("Lunch", lunchObj, sched?.Lunch_Name) : "")
+        + renderMealBox("Dinner", dinnerObj, sched?.Dinner_Name);
+    }
+
+    function renderCalendar() {
+      const year = state.viewYear;
+      const month = state.viewMonth;
+      const firstDay = new Date(year, month, 1);
+      document.getElementById("calendarMonthTitle").textContent = firstDay.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
+      // Monday-first offset
+      let startOffset = firstDay.getDay() - 1;
+      if (startOffset < 0) startOffset = 6;
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const todayISO = formatDateISO(new Date());
+
+      let html = "";
+      for (let i = 0; i < startOffset; i++) {
+        html += `<div class="h-14 sm:h-16 rounded-xl bg-slate-50/50 dark-cell"></div>`;
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const iso = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        const isToday = iso === todayISO;
+        const isSelected = iso === state.selectedDate;
+        const dayEvents = state.events.filter(e => e.start.startsWith(iso));
+        const hasMeal = state.schedule.some(s => s.Date === iso && s.Dinner_Name);
+
+        let ringClass = isSelected
+          ? "ring-2 ring-sky-500 bg-sky-50/70"
+          : (isToday ? "bg-slate-100 font-bold" : "hover:bg-slate-50");
+
+        html += `
+          <button onclick="selectDate('${iso}')" class="h-14 sm:h-16 p-1.5 rounded-xl border border-slate-200/70 flex flex-col justify-between text-left transition ${ringClass}">
+            <div class="flex items-center justify-between w-full">
+              <span class="text-xs font-bold ${isToday ? "px-1.5 py-0.5 rounded-md bg-sky-600 text-white" : ""}">${day}</span>
+              ${hasMeal ? `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500" title="Meal planned"></span>` : ""}
+            </div>
+            <div class="space-y-0.5 w-full overflow-hidden">
+              ${dayEvents.slice(0, 2).map(ev => `
+                <div class="text-[10px] leading-tight truncate px-1 py-0.5 rounded ${ev.colorIndex === 1 ? "bg-pink-100 text-pink-800" : "bg-sky-100 text-sky-800"}">
+                  ${escapeHtml(ev.title)}
+                </div>
+              `).join("")}
+            </div>
+          </button>
+        `;
+      }
+      document.getElementById("calendarGrid").innerHTML = html;
+    }
+
+    function renderWeeklyMeals() {
+      const container = document.getElementById("weeklyMealList");
+      const week = state.schedule.slice(0, 7);
+      container.innerHTML = week.map(day => {
+        const d = new Date(day.Date + "T12:00:00");
+        const dayName = d.toLocaleDateString("en-US", { weekday: "short", day: "numeric" });
+        const isSelected = day.Date === state.selectedDate;
+        return `
+          <div onclick="selectDate('${day.Date}')" class="cursor-pointer flex items-center justify-between p-2.5 rounded-xl border transition ${isSelected ? "border-emerald-500 bg-emerald-50/50" : "border-slate-200/70 hover:bg-slate-50"}">
+            <div class="flex items-center gap-3 min-w-0">
+              <span class="text-xs font-bold w-14 shrink-0 text-slate-500">${dayName}</span>
+              <div class="truncate">
+                <div class="text-xs sm:text-sm font-semibold truncate">${escapeHtml(day.Dinner_Name || "—")}</div>
+                ${state.rules.scope === "both" && day.Lunch_Name ? `<div class="text-[11px] text-slate-500 truncate">Lunch: ${escapeHtml(day.Lunch_Name)}</div>` : ""}
+              </div>
+            </div>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 shrink-0"></i>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderLists() {
+      // Cleanup hint label
+      const cleanupText = state.cleanupMode === "midnight" ? "Clears midnight" : (state.cleanupMode === "24h" ? "Clears in 24h" : "Manual clear");
+      document.getElementById("cleanupHintTodo").textContent = cleanupText;
+
+      // To-Dos
+      const todos = state.lists.filter(i => i.List_Type === "todo");
+      const activeTodos = todos.filter(i => !i.Done);
+      document.getElementById("todoCountBadge").textContent = activeTodos.length;
+
+      const sortedTodos = todos;
+      document.getElementById("todoListEl").innerHTML = sortedTodos.length === 0
+        ? `<p class="text-xs text-slate-400 py-4 text-center">All caught up!</p>`
+        : sortedTodos.map(item => `
+          <div class="flex items-center justify-between gap-2 p-2 rounded-xl hover:bg-slate-50 group">
+            <label class="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0">
+              <input type="checkbox" ${item.Done ? "checked" : ""} onchange="toggleItem('${item.ID}')"
+                class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+              <span class="text-sm truncate ${item.Done ? "line-through text-slate-400" : "font-medium"}">${escapeHtml(item.Text)}</span>
+            </label>
+            <button onclick="deleteItem('${item.ID}')" class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-rose-500 p-1">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        `).join("");
+
+      // Groceries (Grouped automatically by Aisle)
+      const groceries = state.lists.filter(i => i.List_Type === "grocery");
+      const activeGroceries = groceries.filter(i => !i.Done);
+      document.getElementById("groceryCountBadge").textContent = activeGroceries.length;
+
+      const aisleOrder = ["Produce", "Dairy & Fridge", "Bakery & Grains", "Pantry & Spices", "Household"];
+      const grouped = {};
+      groceries.forEach(g => {
+        const cat = g.Category || autoClassifyGrocery(g.Text);
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(g);
+      });
+
+      const groceryEl = document.getElementById("groceryListEl");
+      if (groceries.length === 0) {
+        groceryEl.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">Grocery list is empty.</p>`;
+      } else {
+        groceryEl.innerHTML = aisleOrder.filter(cat => grouped[cat]?.length).map(cat => {
+          const items = grouped[cat];
+          return `
+            <div>
+              <div class="text-[11px] font-bold uppercase tracking-wider text-amber-700/80 mb-1 px-1">${cat}</div>
+              <div class="space-y-1">
+                ${items.map(item => `
+                  <div class="flex items-center justify-between gap-2 px-2 py-1.5 rounded-xl hover:bg-slate-50 group">
+                    <label class="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0">
+                      <input type="checkbox" ${item.Done ? "checked" : ""} onchange="toggleItem('${item.ID}')"
+                        class="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 cursor-pointer" />
+                      <span class="text-sm truncate ${item.Done ? "line-through text-slate-400" : "font-medium"}">${escapeHtml(item.Text)}</span>
+                    </label>
+                    <button onclick="deleteItem('${item.ID}')" class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-rose-500 p-1">
+                      <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    </button>
+                  </div>
+                `).join("")}
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+    }
+
+    // ==========================================
+    // USER ACTIONS & MODALS
+    // ==========================================
+    function selectDate(iso) {
+      state.selectedDate = iso;
+      renderAll();
+    }
+
+    function changeMonth(delta) {
+      state.viewMonth += delta;
+      if (state.viewMonth > 11) { state.viewMonth = 0; state.viewYear++; }
+      if (state.viewMonth < 0) { state.viewMonth = 11; state.viewYear--; }
+      renderCalendar();
+    }
+
+    function jumpToToday() {
+      const now = new Date();
+      state.viewYear = now.getFullYear();
+      state.viewMonth = now.getMonth();
+      state.selectedDate = formatDateISO(now);
+      renderAll();
+    }
+
+    async function handleAddItem(e, listType) {
+      e.preventDefault();
+      const inputId = listType === "grocery" ? "groceryInput" : "todoInput";
+      const input = document.getElementById(inputId);
+      const text = input.value.trim();
+      if (!text) return;
+
+      const category = listType === "grocery" ? autoClassifyGrocery(text) : "General";
+      const newItem = {
+        ID: (listType === "grocery" ? "G" : "T") + Date.now(),
+        List_Type: listType,
+        Text: text,
+        Category: category,
+        Done: false,
+        Completed_At: ""
+      };
+      state.lists.unshift(newItem);
+      input.value = "";
+      persistLocal();
+      renderLists();
+      lucide.createIcons();
+
+      if (state.scriptUrl) {
+        await callBackend("addListItem", { listType, text, category, addedBy: "Family" });
+      }
+    }
+
+    async function toggleItem(id) {
+      const item = state.lists.find(i => String(i.ID) === String(id));
+      if (!item) return;
+      item.Done = !item.Done;
+      item.Completed_At = item.Done ? new Date().toISOString() : "";
+      persistLocal();
+      renderLists();
+      lucide.createIcons();
+
+      if (state.scriptUrl) {
+        await callBackend("toggleListItem", { id, done: item.Done });
+      }
+    }
+
+    async function deleteItem(id) {
+      state.lists = state.lists.filter(i => String(i.ID) !== String(id));
+      persistLocal();
+      renderLists();
+      lucide.createIcons();
+
+      if (state.scriptUrl) {
+        await callBackend("deleteListItem", { id });
+      }
+    }
+
+    function openEventModal() {
+      document.getElementById("evDate").value = state.selectedDate;
+      document.getElementById("eventModal").classList.remove("hidden");
+    }
+
+    async function submitNewEvent(e) {
+      e.preventDefault();
+      const title = document.getElementById("evTitle").value.trim();
+      const date = document.getElementById("evDate").value;
+      const time = document.getElementById("evTime").value || "10:00";
+      const location = document.getElementById("evLocation").value.trim();
+      const startISO = `${date}T${time}:00`;
+
+      state.events.push({
+        id: "ev_" + Date.now(),
+        title,
+        start: startISO,
+        end: startISO,
+        location,
+        colorIndex: 0
+      });
+      persistLocal();
+      closeModal("eventModal");
+      document.getElementById("evTitle").value = "";
+      document.getElementById("evLocation").value = "";
+      renderAll();
+
+      if (state.scriptUrl) {
+        await callBackend("addEvent", { title, start: startISO, location });
+      }
+    }
+
+    function openMealRules() {
+      document.getElementById("ruleMealScope").value = state.rules.scope;
+      document.getElementById("ruleBusyQuick").checked = state.rules.busyQuick;
+      document.getElementById("ruleWeekendSpecial").checked = state.rules.weekendSpecial;
+      renderChips();
+      renderPoolModalList();
+      document.getElementById("mealRulesModal").classList.remove("hidden");
+    }
+
+    function renderChips() {
+      document.getElementById("cuisineChips").innerHTML = ALL_CUISINES.map(c => {
+        const active = state.rules.cuisines.includes(c);
+        return `<button type="button" onclick="toggleRuleChip('cuisines', '${c}')" class="text-xs font-semibold px-3 py-1.5 rounded-full border transition ${active ? "bg-emerald-600 text-white border-emerald-600" : "bg-slate-100 text-slate-600 border-slate-200"}">${c}</button>`;
+      }).join("");
+
+      document.getElementById("typeChips").innerHTML = ALL_TYPES.map(t => {
+        const active = state.rules.types.includes(t);
+        return `<button type="button" onclick="toggleRuleChip('types', '${t}')" class="text-xs font-semibold px-3 py-1.5 rounded-full border transition ${active ? "bg-sky-600 text-white border-sky-600" : "bg-slate-100 text-slate-600 border-slate-200"}">${t}</button>`;
+      }).join("");
+    }
+
+    function toggleRuleChip(key, val) {
+      const arr = state.rules[key];
+      const idx = arr.indexOf(val);
+      if (idx >= 0 && arr.length > 1) arr.splice(idx, 1);
+      else if (idx < 0) arr.push(val);
+      renderChips();
+    }
+
+    function renderPoolModalList() {
+      document.getElementById("poolCount").textContent = state.meals.length;
+      document.getElementById("mealPoolList").innerHTML = state.meals.map(m => `
+        <div class="p-2 flex items-center justify-between">
+          <div>
+            <span class="font-semibold">${escapeHtml(m.Name)}</span>
+            <span class="text-slate-400 ml-1">(${m.Cuisine} • ${m.Type})</span>
+          </div>
+          <span class="text-slate-400">${m.Prep_Mins}m</span>
+        </div>
+      `).join("");
+    }
+
+    async function submitNewDish(e) {
+      e.preventDefault();
+      const dish = {
+        ID: "M" + Date.now(),
+        Name: document.getElementById("dishName").value.trim(),
+        Cuisine: document.getElementById("dishCuisine").value,
+        Type: document.getElementById("dishType").value,
+        Prep_Mins: document.getElementById("dishType").value.includes("Quick") ? 20 : 35,
+        Ingredients: document.getElementById("dishIngredients").value.trim()
+      };
+      state.meals.unshift(dish);
+      persistLocal();
+      document.getElementById("dishName").value = "";
+      document.getElementById("dishIngredients").value = "";
+      renderPoolModalList();
+
+      if (state.scriptUrl) {
+        await callBackend("addMeal", dish);
+      }
+    }
+
+    function saveRulesAndRegenerate() {
+      state.rules.scope = document.getElementById("ruleMealScope").value;
+      state.rules.busyQuick = document.getElementById("ruleBusyQuick").checked;
+      state.rules.weekendSpecial = document.getElementById("ruleWeekendSpecial").checked;
+      persistLocal();
+      closeModal("mealRulesModal");
+      generateWeeklyMeals();
+    }
+
+    function openSettings() {
+      document.getElementById("cfgScriptUrl").value = state.scriptUrl;
+      document.getElementById("cfgApiToken").value = state.apiToken;
+      document.getElementById("cfgCalendarIds").value = state.calendarIds;
+      document.getElementById("cfgCleanupMode").value = state.cleanupMode;
+      document.getElementById("settingsModal").classList.remove("hidden");
+    }
+
+    async function saveSettings() {
+      state.scriptUrl = document.getElementById("cfgScriptUrl").value.trim();
+      state.apiToken = document.getElementById("cfgApiToken").value.trim();
+      state.calendarIds = document.getElementById("cfgCalendarIds").value.trim() || "simarwalia09@gmail.com";
+      state.cleanupMode = document.getElementById("cfgCleanupMode").value;
+      persistLocal();
+      closeModal("settingsModal");
+      updateSyncBadge();
+      if (state.scriptUrl) {
+        await callBackend("saveSettings", {
+          settings: { calendar_ids: state.calendarIds, cleanup_mode: state.cleanupMode }
+        });
+        await syncWithBackend(true);
+      } else {
+        renderAll();
+      }
+    }
+
+    async function triggerCleanupNow() {
+      state.lists = state.lists.filter(i => !i.Done);
+      persistLocal();
+      renderLists();
+      lucide.createIcons();
+      if (state.scriptUrl) {
+        await callBackend("cleanupNow", {});
+      }
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add("hidden");
+    }
+
+    // ==========================================
+    // MOBILE TAB SWITCHING & DARK TV MODE
+    // ==========================================
+    function switchMobileTab(tab) {
+      state.mobileTab = tab;
+      const leftCol = document.getElementById("leftColumn");
+      const rightCol = document.getElementById("rightColumn");
+      const calCard = document.getElementById("calendarCard");
+      const mealCard = document.getElementById("mealPlanCard");
+
+      ["today", "month", "meals"].forEach(t => {
+        const btn = document.getElementById("nav-" + t);
+        btn.className = t === tab
+          ? "flex flex-col items-center gap-1 text-sky-600 font-bold text-xs"
+          : "flex flex-col items-center gap-1 text-slate-500 font-medium text-xs";
+      });
+
+      if (window.innerWidth < 768) {
+        if (tab === "today") {
+          rightCol.classList.remove("hidden");
+          leftCol.classList.add("hidden");
+        } else if (tab === "month") {
+          rightCol.classList.add("hidden");
+          leftCol.classList.remove("hidden");
+          leftCol.classList.add("flex");
+          calCard.classList.remove("hidden");
+          mealCard.classList.add("hidden");
+        } else if (tab === "meals") {
+          rightCol.classList.add("hidden");
+          leftCol.classList.remove("hidden");
+          leftCol.classList.add("flex");
+          calCard.classList.add("hidden");
+          mealCard.classList.remove("hidden");
+        }
+      }
+    }
+
+    function toggleDarkMode() {
+      state.darkMode = !state.darkMode;
+      localStorage.setItem("fh_darkMode", state.darkMode);
+      applyTheme();
+    }
+
+    function applyTheme() {
+      const body = document.getElementById("appBody");
+      const topBar = document.getElementById("topBar");
+      const cards = document.querySelectorAll(".card");
+      if (state.darkMode) {
+        body.classList.remove("bg-slate-100", "text-slate-900");
+        body.classList.add("bg-slate-950", "text-slate-100");
+        topBar.classList.remove("bg-white/90", "border-slate-200");
+        topBar.classList.add("bg-slate-900/90", "border-slate-800");
+        cards.forEach(c => {
+          c.classList.remove("bg-white", "border-slate-200/80");
+          c.classList.add("bg-slate-900", "border-slate-800");
+        });
+      } else {
+        body.classList.add("bg-slate-100", "text-slate-900");
+        body.classList.remove("bg-slate-950", "text-slate-100");
+        topBar.classList.add("bg-white/90", "border-slate-200");
+        topBar.classList.remove("bg-slate-900/90", "border-slate-800");
+        cards.forEach(c => {
+          c.classList.add("bg-white", "border-slate-200/80");
+          c.classList.remove("bg-slate-900", "border-slate-800");
+        });
+      }
+    }
+
+    // ==========================================
+    // GOOGLE APPS SCRIPT SYNC CLIENT
+    // ==========================================
+    async function syncWithBackend(manual = false) {
+      if (!state.scriptUrl) {
+        if (manual) openSettings();
+        return;
+      }
+      const icon = document.getElementById("refreshIcon");
+      icon.classList.add("animate-spin");
+      try {
+        const url = `${state.scriptUrl}?action=sync&token=${encodeURIComponent(state.apiToken)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.ok) {
+          if (data.events) state.events = data.events;
+          if (data.meals && data.meals.length) state.meals = data.meals;
+          if (data.schedule && data.schedule.length) state.schedule = data.schedule;
+          if (data.lists) {
+            state.lists = data.lists.map(item => ({
+              ...item,
+              Done: String(item.Done).toUpperCase() === "TRUE"
+            }));
+          }
+          persistLocal();
+          renderAll();
+          setBadgeConnected(true);
+        } else {
+          setBadgeConnected(false, data.error);
+        }
+      } catch (err) {
+        setBadgeConnected(false);
+      } finally {
+        icon.classList.remove("animate-spin");
+      }
+    }
+
+    async function callBackend(action, payload) {
+      if (!state.scriptUrl) return;
+      try {
+        await fetch(state.scriptUrl, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action, token: state.apiToken, ...payload })
+        });
+      } catch (e) {
+        console.warn("Background sync error:", e);
+      }
+    }
+
+    function updateSyncBadge() {
+      if (!state.scriptUrl) {
+        document.getElementById("syncLabel").textContent = "Connect Google";
+      } else {
+        setBadgeConnected(true);
+      }
+    }
+
+    function setBadgeConnected(ok, errMsg) {
+      const btn = document.getElementById("syncStatusBtn");
+      const dot = document.getElementById("syncDot");
+      const lbl = document.getElementById("syncLabel");
+      if (ok) {
+        btn.className = "flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200";
+        dot.className = "w-2 h-2 rounded-full bg-emerald-500";
+        lbl.textContent = "Google Live";
+      } else {
+        btn.className = "flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200";
+        dot.className = "w-2 h-2 rounded-full bg-rose-500";
+        lbl.textContent = errMsg ? "Auth Error" : "Offline";
+      }
+    }
+
+    // ==========================================
+    // HELPERS & INITIALIZATION
+    // ==========================================
+    function persistLocal() {
+      localStorage.setItem("fh_scriptUrl", state.scriptUrl);
+      localStorage.setItem("fh_apiToken", state.apiToken);
+      localStorage.setItem("fh_calendarIds", state.calendarIds);
+      localStorage.setItem("fh_cleanupMode", state.cleanupMode);
+      localStorage.setItem("fh_rules", JSON.stringify(state.rules));
+      localStorage.setItem("fh_meals", JSON.stringify(state.meals));
+      localStorage.setItem("fh_schedule", JSON.stringify(state.schedule));
+      localStorage.setItem("fh_events", JSON.stringify(state.events));
+      localStorage.setItem("fh_lists", JSON.stringify(state.lists));
+    }
+
+    function formatDateISO(d) {
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    }
+
+    function escapeHtml(str) {
+      return String(str || "").replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+    }
+
+    function updateClock() {
+      const now = new Date();
+      document.getElementById("liveClock").textContent = now.toLocaleDateString("en-US", {
+        weekday: "short", month: "short", day: "numeric"
+      }) + " • " + now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
+
+    // Register PWA Service Worker
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
+    }
+
+    // Boot
+    ensureScheduleForWeek();
+    updateClock();
+    setInterval(updateClock, 30000);
+    updateSyncBadge();
+    renderAll();
+    if (state.scriptUrl) syncWithBackend();
+    setInterval(() => { if (state.scriptUrl) syncWithBackend(); }, 10 * 60 * 1000); // Auto-refresh every 10m for TV
+  </script>
+</body>
+</html>
