@@ -31,7 +31,7 @@
       </div>
       <div>
         <h1 class="font-bold text-base sm:text-lg leading-tight tracking-tight">Family Hub</h1>
-        <p id="liveClock" class="text-xs text-slate-500 font-medium"></p>
+        <p class="text-xs text-slate-500 font-medium"><span id="liveClock"></span> <span class="opacity-60">• v2.1</span></p>
       </div>
     </div>
 
@@ -87,6 +87,26 @@
           <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
         </div>
         <div id="calendarGrid" class="grid grid-cols-7 gap-1 sm:gap-1.5"></div>
+
+        <!-- Mobile Selected Day Agenda Drawer (Visible only on Phone below calendar grid) -->
+        <div id="mobileMonthAgenda" class="md:hidden mt-4 pt-4 border-t border-slate-200/80">
+          <div class="flex items-center justify-between mb-2.5">
+            <div>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-sky-600">Selected Date</span>
+              <h3 id="mobileAgendaDateTitle" class="font-bold text-sm text-slate-900">Thursday, Nov 19</h3>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button onclick="openEventModal()" class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-sky-50 text-sky-700 hover:bg-sky-100 flex items-center gap-1">
+                <i data-lucide="plus" class="w-3 h-3"></i> Event
+              </button>
+              <button onclick="switchMobileTab('today')" class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-900 text-white flex items-center gap-1">
+                <span>Full Focus</span>
+                <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
+              </button>
+            </div>
+          </div>
+          <div id="mobileAgendaBody" class="space-y-2"></div>
+        </div>
       </div>
 
       <!-- Weekly Meal Schedule & Generator Card -->
@@ -352,9 +372,14 @@
             <option value="24h">Auto-remove 24 hours after checked</option>
             <option value="manual">Keep checked items until manually cleared</option>
           </select>
-          <button onclick="triggerCleanupNow()" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800">
-            Clear All Checked Items Now
-          </button>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="triggerCleanupNow()" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800">
+              Clear All Checked Items Now
+            </button>
+            <button onclick="forceAppReload()" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-sky-100 hover:bg-sky-200 text-sky-800">
+              Force Reload App Cache
+            </button>
+          </div>
         </div>
       </div>
 
@@ -612,10 +637,61 @@
       runLocalCleanup();
       renderHero();
       renderCalendar();
+      renderMobileMonthAgenda();
       renderWeeklyMeals();
       renderLists();
       applyTheme();
       lucide.createIcons();
+    }
+
+    function renderMobileMonthAgenda() {
+      const iso = state.selectedDate;
+      const d = new Date(iso + "T12:00:00");
+      const titleEl = document.getElementById("mobileAgendaDateTitle");
+      const bodyEl = document.getElementById("mobileAgendaBody");
+      if (!titleEl || !bodyEl) return;
+
+      titleEl.textContent = d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+
+      const dayEvents = state.events.filter(e => e.start.startsWith(iso));
+      const sched = state.schedule.find(s => s.Date === iso);
+
+      let parts = [];
+      if (dayEvents.length === 0) {
+        parts.push(`<div class="text-xs text-slate-400 bg-slate-50 rounded-xl px-3 py-2">No events on this day.</div>`);
+      } else {
+        dayEvents.forEach(ev => {
+          const timeStr = ev.allDay ? "All Day" : new Date(ev.start).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+          const dotColor = ev.colorIndex === 1 ? "bg-pink-500" : "bg-sky-500";
+          parts.push(`
+            <div class="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2 border border-slate-200/70">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-2 h-2 rounded-full ${dotColor} shrink-0"></span>
+                <div class="truncate">
+                  <div class="text-xs font-semibold truncate">${escapeHtml(ev.title)}</div>
+                  ${ev.location ? `<div class="text-[10px] text-slate-500 truncate">${escapeHtml(ev.location)}</div>` : ""}
+                </div>
+              </div>
+              <span class="text-[11px] font-bold text-sky-700 bg-sky-100 px-2 py-0.5 rounded-md shrink-0 ml-2">${timeStr}</span>
+            </div>
+          `);
+        });
+      }
+
+      if (sched && (sched.Dinner_Name || sched.Lunch_Name)) {
+        const mealSummary = [
+          state.rules.scope === "both" && sched.Lunch_Name ? `Lunch: ${sched.Lunch_Name}` : "",
+          sched.Dinner_Name ? `Dinner: ${sched.Dinner_Name}` : ""
+        ].filter(Boolean).join(" • ");
+        parts.push(`
+          <div class="flex items-center gap-2 bg-emerald-50/70 text-emerald-900 rounded-xl px-3 py-2 border border-emerald-200/70 text-xs">
+            <i data-lucide="utensils" class="w-3.5 h-3.5 text-emerald-600 shrink-0"></i>
+            <span class="truncate font-medium">${escapeHtml(mealSummary)}</span>
+          </div>
+        `);
+      }
+
+      bodyEl.innerHTML = parts.join("");
     }
 
     function renderHero() {
@@ -754,7 +830,7 @@
       const activeTodos = todos.filter(i => !i.Done);
       document.getElementById("todoCountBadge").textContent = activeTodos.length;
 
-      const sortedTodos = [...todos].sort((a, b) => Number(a.Done) - Number(b.Done));
+      const sortedTodos = todos;
       document.getElementById("todoListEl").innerHTML = sortedTodos.length === 0
         ? `<p class="text-xs text-slate-400 py-4 text-center">All caught up!</p>`
         : sortedTodos.map(item => `
@@ -788,7 +864,7 @@
         groceryEl.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">Grocery list is empty.</p>`;
       } else {
         groceryEl.innerHTML = aisleOrder.filter(cat => grouped[cat]?.length).map(cat => {
-          const items = grouped[cat].sort((a, b) => Number(a.Done) - Number(b.Done));
+          const items = grouped[cat];
           return `
             <div>
               <div class="text-[11px] font-bold uppercase tracking-wider text-amber-700/80 mb-1 px-1">${cat}</div>
@@ -1031,6 +1107,18 @@
       document.getElementById(id).classList.add("hidden");
     }
 
+    async function forceAppReload() {
+      if ("serviceWorker" in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (const r of regs) await r.unregister();
+      }
+      if ("caches" in window) {
+        const keys = await caches.keys();
+        for (const k of keys) await caches.delete(k);
+      }
+      window.location.reload(true);
+    }
+
     // ==========================================
     // MOBILE TAB SWITCHING & DARK TV MODE
     // ==========================================
@@ -1087,6 +1175,8 @@
           c.classList.remove("bg-white", "border-slate-200/80");
           c.classList.add("bg-slate-900", "border-slate-800");
         });
+        const mobTitle = document.getElementById("mobileAgendaDateTitle");
+        if (mobTitle) { mobTitle.classList.remove("text-slate-900"); mobTitle.classList.add("text-white"); }
       } else {
         body.classList.add("bg-slate-100", "text-slate-900");
         body.classList.remove("bg-slate-950", "text-slate-100");
@@ -1096,6 +1186,8 @@
           c.classList.add("bg-white", "border-slate-200/80");
           c.classList.remove("bg-slate-900", "border-slate-800");
         });
+        const mobTitle = document.getElementById("mobileAgendaDateTitle");
+        if (mobTitle) { mobTitle.classList.add("text-slate-900"); mobTitle.classList.remove("text-white"); }
       }
     }
 
