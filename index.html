@@ -31,7 +31,7 @@
       </div>
       <div>
         <h1 class="font-bold text-base sm:text-lg leading-tight tracking-tight">Family Hub</h1>
-        <p class="text-xs text-slate-500 font-medium"><span id="liveClock"></span> <span class="opacity-60">• v2.1</span></p>
+        <p class="text-xs text-slate-500 font-medium"><span id="liveClock"></span> <span class="opacity-60">• v2.3</span></p>
       </div>
     </div>
 
@@ -181,41 +181,45 @@
       <div id="listsContainer" class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
 
         <!-- Family To-Do List -->
-        <div class="card bg-white rounded-2xl shadow-sm border border-slate-200/80 p-4 sm:p-5 flex flex-col">
-          <div class="flex items-center justify-between mb-3">
-            <h3 class="font-bold text-base flex items-center gap-2">
-              <i data-lucide="check-square" class="w-4 h-4 text-indigo-600"></i>
+        <div class="card bg-white rounded-2xl shadow-sm border border-slate-200/80 p-4 sm:p-5 flex flex-col min-w-0">
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <h3 class="font-bold text-base flex items-center gap-2 whitespace-nowrap">
+              <i data-lucide="check-square" class="w-4 h-4 text-indigo-600 shrink-0"></i>
               <span>Family To-Do</span>
               <span id="todoCountBadge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">0</span>
             </h3>
-            <span id="cleanupHintTodo" class="text-[11px] text-slate-400">Clears midnight</span>
+            <span id="cleanupHintTodo" class="text-[11px] text-slate-400 whitespace-nowrap">Clears midnight</span>
           </div>
 
-          <form onsubmit="handleAddItem(event, 'todo')" class="flex gap-2 mb-3">
+          <form onsubmit="handleAddItem(event, 'todo')" class="flex flex-col gap-2 mb-3.5 w-full">
             <input id="todoInput" type="text" placeholder="Add task..." required
-              class="flex-1 text-sm px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-            <button type="submit" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm">Add</button>
+              class="w-full box-border text-sm px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <button type="submit" class="w-full py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition shadow-sm">
+              + Add Task
+            </button>
           </form>
 
           <div id="todoListEl" class="space-y-1.5 flex-1 max-h-[340px] overflow-y-auto no-scrollbar"></div>
         </div>
 
         <!-- Smart Auto-Classified Grocery List -->
-        <div class="card bg-white rounded-2xl shadow-sm border border-slate-200/80 p-4 sm:p-5 flex flex-col">
-          <div class="flex items-center justify-between mb-3">
-            <h3 class="font-bold text-base flex items-center gap-2">
-              <i data-lucide="shopping-bag" class="w-4 h-4 text-amber-600"></i>
+        <div class="card bg-white rounded-2xl shadow-sm border border-slate-200/80 p-4 sm:p-5 flex flex-col min-w-0">
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <h3 class="font-bold text-base flex items-center gap-2 whitespace-nowrap">
+              <i data-lucide="shopping-bag" class="w-4 h-4 text-amber-600 shrink-0"></i>
               <span>Groceries</span>
               <span id="groceryCountBadge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">0</span>
             </h3>
-            <span class="text-[11px] text-slate-400">Auto-sorted by aisle</span>
+            <span class="text-[11px] text-slate-400 whitespace-nowrap">Auto-sorted</span>
           </div>
 
-          <!-- Single-step input: no manual category selection -->
-          <form onsubmit="handleAddItem(event, 'grocery')" class="flex gap-2 mb-3">
+          <!-- Stacked full-width input + full-width button -->
+          <form onsubmit="handleAddItem(event, 'grocery')" class="flex flex-col gap-2 mb-3.5 w-full">
             <input id="groceryInput" type="text" placeholder="Add item (e.g., Paneer, Spinach)..." required
-              class="flex-1 text-sm px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500" />
-            <button type="submit" class="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-sm">Add</button>
+              class="w-full box-border text-sm px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <button type="submit" class="w-full py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-sm transition shadow-sm">
+              + Add Item
+            </button>
           </form>
 
           <div id="groceryListEl" class="space-y-3 flex-1 max-h-[340px] overflow-y-auto no-scrollbar"></div>
@@ -765,7 +769,7 @@
 
       let html = "";
       for (let i = 0; i < startOffset; i++) {
-        html += `<div class="h-14 sm:h-16 rounded-xl bg-slate-50/50 dark-cell"></div>`;
+        html += `<div class="h-14 sm:h-16 rounded-xl"></div>`;
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
@@ -1177,6 +1181,13 @@
         });
         const mobTitle = document.getElementById("mobileAgendaDateTitle");
         if (mobTitle) { mobTitle.classList.remove("text-slate-900"); mobTitle.classList.add("text-white"); }
+        ["todoInput", "groceryInput"].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.classList.remove("bg-slate-50", "border-slate-200", "text-slate-900");
+            el.classList.add("bg-slate-800", "border-slate-700", "text-white");
+          }
+        });
       } else {
         body.classList.add("bg-slate-100", "text-slate-900");
         body.classList.remove("bg-slate-950", "text-slate-100");
@@ -1188,6 +1199,13 @@
         });
         const mobTitle = document.getElementById("mobileAgendaDateTitle");
         if (mobTitle) { mobTitle.classList.add("text-slate-900"); mobTitle.classList.remove("text-white"); }
+        ["todoInput", "groceryInput"].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.classList.add("bg-slate-50", "border-slate-200", "text-slate-900");
+            el.classList.remove("bg-slate-800", "border-slate-700", "text-white");
+          }
+        });
       }
     }
 
