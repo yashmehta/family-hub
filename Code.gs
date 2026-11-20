@@ -111,16 +111,26 @@ function handleRequest(e, method) {
       const sheet = ss.getSheetByName("Meal_Schedule");
       const rows = body.schedule || [];
       sheet.clearContents();
-      sheet.appendRow(["Date", "Lunch_ID", "Lunch_Name", "Dinner_ID", "Dinner_Name"]);
+      sheet.appendRow(["Date", "Breakfast_ID", "Breakfast_Name", "Lunch_ID", "Lunch_Name", "Dinner_ID", "Dinner_Name"]);
       rows.forEach(r => {
-        sheet.appendRow([r.Date, r.Lunch_ID || "", r.Lunch_Name || "", r.Dinner_ID || "", r.Dinner_Name || ""]);
+        sheet.appendRow([
+          r.Date,
+          r.Breakfast_ID || "",
+          r.Breakfast_Name || "",
+          r.Lunch_ID || "",
+          r.Lunch_Name || "",
+          r.Dinner_ID || "",
+          r.Dinner_Name || ""
+        ]);
       });
       return jsonResponse({ ok: true });
     }
 
     if (action === "addMeal") {
       const sheet = ss.getSheetByName("Meal_Pool");
-      const id = "M" + Math.floor(100 + Math.random() * 900);
+      const isBreakfast = String(body.Cuisine || "").toLowerCase() === "breakfast" || String(body.Type || "").toLowerCase() === "breakfast";
+      const prefix = isBreakfast ? "B" : "M";
+      const id = body.ID || (prefix + Math.floor(100 + Math.random() * 900));
       sheet.appendRow([
         id,
         body.Name,
@@ -131,6 +141,18 @@ function handleRequest(e, method) {
         "TRUE"
       ]);
       return jsonResponse({ ok: true, id: id });
+    }
+
+    if (action === "toggleMealActive") {
+      const sheet = ss.getSheetByName("Meal_Pool");
+      const data = sheet.getDataRange().getValues();
+      for (let i = 1; i < data.length; i++) {
+        if (String(data[i][0]) === String(body.id)) {
+          sheet.getRange(i + 1, 7).setValue(Boolean(body.active) ? "TRUE" : "FALSE");
+          break;
+        }
+      }
+      return jsonResponse({ ok: true });
     }
 
     if (action === "saveSettings") {
@@ -178,11 +200,9 @@ function fetchCalendarEvents(calIdsStr) {
         const endTime = ev.getEndTime();
 
         const startDateStr = Utilities.formatDate(startTime, tz, "yyyy-MM-dd");
-        // For all-day events, Google's endTime is exclusive (midnight of the day after), so subtract 1ms
         const effectiveEnd = new Date(endTime.getTime() - (isAllDay ? 1 : 0));
         const endDateStr = Utilities.formatDate(effectiveEnd, tz, "yyyy-MM-dd");
 
-        // Expand across every calendar day from startDateStr to endDateStr
         let cursor = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate(), 12, 0, 0);
         const lastDay = new Date(effectiveEnd.getFullYear(), effectiveEnd.getMonth(), effectiveEnd.getDate(), 12, 0, 0);
 
@@ -212,7 +232,7 @@ function fetchCalendarEvents(calIdsStr) {
             title: ev.getTitle() + dayLabel,
             start: startStr,
             end: endStr,
-            allDay: isAllDay || !isFirstDay, // Shows actual start time on Day 1, and "All Day" on continuation days
+            allDay: isAllDay || !isFirstDay,
             location: ev.getLocation() || ""
           });
 

@@ -31,7 +31,7 @@
       </div>
       <div>
         <h1 class="font-bold text-base sm:text-lg leading-tight tracking-tight">Family Hub</h1>
-        <p class="text-xs text-slate-500 font-medium"><span id="liveClock"></span> <span class="opacity-60">• v2.3</span></p>
+        <p class="text-xs text-slate-500 font-medium"><span id="liveClock"></span> <span class="opacity-60">• v2.4</span></p>
       </div>
     </div>
 
@@ -60,11 +60,9 @@
   </header>
 
   <!-- Main Responsive Container -->
-  <!-- Mobile: Single column starting with Today's Focus, bottom nav switches to Month/Meals -->
-  <!-- Tablet & TV (md+): Split view with Monthly Calendar on Left, Today's Focus + Lists on Right -->
   <main class="max-w-[1800px] mx-auto p-3 sm:p-5 pb-24 md:pb-6 grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-5">
 
-    <!-- LEFT COLUMN (Desktop/Tablet: Monthly Calendar + Weekly Meal Strip | Mobile: Shown when 'Month' or 'Meals' tab active) -->
+    <!-- LEFT COLUMN -->
     <section id="leftColumn" class="hidden md:flex md:col-span-6 lg:col-span-6 flex-col gap-4 sm:gap-5">
 
       <!-- Monthly Calendar Card -->
@@ -88,7 +86,7 @@
         </div>
         <div id="calendarGrid" class="grid grid-cols-7 gap-1 sm:gap-1.5"></div>
 
-        <!-- Mobile Selected Day Agenda Drawer (Visible only on Phone below calendar grid) -->
+        <!-- Mobile Selected Day Agenda Drawer -->
         <div id="mobileMonthAgenda" class="md:hidden mt-4 pt-4 border-t border-slate-200/80">
           <div class="flex items-center justify-between mb-2.5">
             <div>
@@ -138,10 +136,10 @@
       </div>
     </section>
 
-    <!-- RIGHT COLUMN (Always visible first on Mobile; Right half on Tablet/TV) -->
+    <!-- RIGHT COLUMN -->
     <section id="rightColumn" class="md:col-span-6 lg:col-span-6 flex flex-col gap-4 sm:gap-5">
 
-      <!-- HERO CARD: TODAY'S FOCUS (Always First Across Phone, Tablet & TV) -->
+      <!-- HERO CARD: TODAY'S FOCUS -->
       <div id="todayHeroCard" class="rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-sky-950 text-white p-4 sm:p-6 shadow-md border border-slate-700/60">
         <div class="flex items-start justify-between gap-2 mb-4">
           <div>
@@ -173,7 +171,7 @@
               <i data-lucide="shuffle" class="w-3 h-3"></i> Swap Today
             </button>
           </div>
-          <div id="heroMealsList" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+          <div id="heroMealsList" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5"></div>
         </div>
       </div>
 
@@ -213,7 +211,6 @@
             <span class="text-[11px] text-slate-400 whitespace-nowrap">Auto-sorted</span>
           </div>
 
-          <!-- Stacked full-width input + full-width button -->
           <form onsubmit="handleAddItem(event, 'grocery')" class="flex flex-col gap-2 mb-3.5 w-full">
             <input id="groceryInput" type="text" placeholder="Add item (e.g., Paneer, Spinach)..." required
               class="w-full box-border text-sm px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500" />
@@ -229,7 +226,7 @@
     </section>
   </main>
 
-  <!-- Mobile Bottom Navigation Bar (Hidden on Tablet/TV md+) -->
+  <!-- Mobile Bottom Navigation Bar -->
   <nav id="mobileBottomNav" class="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-slate-200 grid grid-cols-3 py-2 px-3 shadow-lg">
     <button onclick="switchMobileTab('today')" id="nav-today" class="flex flex-col items-center gap-1 text-sky-600 font-bold text-xs">
       <i data-lucide="sparkles" class="w-5 h-5"></i>
@@ -292,6 +289,7 @@
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Meals to Plan</label>
             <select id="ruleMealScope" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-white">
+              <option value="all">Breakfast, Lunch & Dinner</option>
               <option value="both">Lunch & Dinner</option>
               <option value="dinner">Dinner Only</option>
             </select>
@@ -303,7 +301,11 @@
             </label>
             <label class="flex items-center gap-2 cursor-pointer">
               <input id="ruleWeekendSpecial" type="checkbox" checked class="rounded text-emerald-600" />
-              <span>Save Weekend Specials for Sat/Sun</span>
+              <span>Save Weekend Specials / Fri-Sat Takeout</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input id="ruleLeftoverLunch" type="checkbox" checked class="rounded text-emerald-600" />
+              <span>Carry over Curry/Pasta dinners to next-day Lunch</span>
             </label>
           </div>
         </div>
@@ -322,9 +324,9 @@
         <div class="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200">
           <h4 class="text-xs font-bold text-emerald-900 uppercase tracking-wider mb-2">Add Dish to Family Pool</h4>
           <form onsubmit="submitNewDish(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-2">
-            <input id="dishName" type="text" required placeholder="Dish name (e.g., Aloo Paratha & Curd)" class="sm:col-span-5 text-xs px-2.5 py-2 rounded-lg border border-emerald-200 bg-white" />
+            <input id="dishName" type="text" required placeholder="Dish name (include Yash/Xavi notes if egg-based)" class="sm:col-span-5 text-xs px-2.5 py-2 rounded-lg border border-emerald-200 bg-white" />
             <select id="dishCuisine" class="sm:col-span-3 text-xs px-2 py-2 rounded-lg border border-emerald-200 bg-white">
-              <option>Indian</option><option>Italian</option><option>Asian</option><option>Mexican</option><option>Mediterranean</option><option>Dutch</option>
+              <option>Indian</option><option>Indo-Chinese</option><option>Mexican</option><option>Sandwiches</option><option>Salads &amp; Soups</option><option>Breakfast</option><option>Italian</option>
             </select>
             <select id="dishType" class="sm:col-span-4 text-xs px-2 py-2 rounded-lg border border-emerald-200 bg-white">
               <option>Quick (&lt;25m)</option><option>Curry &amp; Rice</option><option>Pasta / Noodles</option><option>One-Pot</option><option>Weekend Special</option>
@@ -336,8 +338,8 @@
 
         <!-- Current Dish Pool List -->
         <div>
-          <h4 class="text-xs font-bold text-slate-700 mb-1.5">Active Family Dishes (<span id="poolCount">0</span>)</h4>
-          <div id="mealPoolList" class="max-h-40 overflow-y-auto divide-y divide-slate-100 border border-slate-200 rounded-xl text-xs"></div>
+          <h4 class="text-xs font-bold text-slate-700 mb-1.5">Family Dish Pool (<span id="poolCount">0</span> active)</h4>
+          <div id="mealPoolList" class="max-h-48 overflow-y-auto divide-y divide-slate-100 border border-slate-200 rounded-xl text-xs"></div>
         </div>
       </div>
 
@@ -396,22 +398,30 @@
 
   <script>
     // ==========================================
-    // STATE & DEFAULT DATA (Lacto-Vegetarian)
+    // STATE & DEFAULT DATA (Household Dietary Aligned)
     // ==========================================
-    const ALL_CUISINES = ["Indian", "Italian", "Asian", "Mexican", "Mediterranean", "Dutch"];
+    const ALL_CUISINES = ["Indian", "Indo-Chinese", "Mexican", "Sandwiches", "Salads & Soups", "Breakfast", "Italian"];
     const ALL_TYPES = ["Quick (<25m)", "Curry & Rice", "Pasta / Noodles", "One-Pot", "Weekend Special"];
 
     const DEFAULT_MEALS = [
-      { ID: "M01", Name: "Palak Paneer & Jeera Rice", Cuisine: "Indian", Type: "Curry & Rice", Prep_Mins: 30, Ingredients: "Spinach, Paneer, Basmati Rice, Cumin, Ginger, Garlic, Cream" },
-      { ID: "M02", Name: "Dal Tadka, Roti & Cucumber Raita", Cuisine: "Indian", Type: "Curry & Rice", Prep_Mins: 25, Ingredients: "Toor Dal, Whole Wheat Flour, Yogurt, Cucumber, Ghee" },
-      { ID: "M03", Name: "Creamy Pesto Fusilli & Roasted Zucchini", Cuisine: "Italian", Type: "Pasta / Noodles", Prep_Mins: 20, Ingredients: "Fusilli Pasta, Basil Pesto, Zucchini, Cherry Tomatoes, Parmesan" },
-      { ID: "M04", Name: "Crispy Tofu & Veggie Peanut Noodles", Cuisine: "Asian", Type: "Quick (<25m)", Prep_Mins: 20, Ingredients: "Firm Tofu, Rice Noodles, Bell Pepper, Broccoli, Peanut Butter" },
-      { ID: "M05", Name: "Black Bean & Sweet Potato Quesadillas", Cuisine: "Mexican", Type: "Quick (<25m)", Prep_Mins: 25, Ingredients: "Flour Tortillas, Black Beans, Sweet Potato, Cheddar, Salsa, Avocado" },
-      { ID: "M06", Name: "Chickpea & Spinach Tomato Skillet", Cuisine: "Mediterranean", Type: "One-Pot", Prep_Mins: 25, Ingredients: "Chickpeas, Crushed Tomatoes, Baby Spinach, Feta, Sourdough Bread" },
-      { ID: "M07", Name: "Chole, Pita & Fresh Mint Chutney", Cuisine: "Indian", Type: "Weekend Special", Prep_Mins: 45, Ingredients: "Chickpeas, Onion, Tomato, Chole Masala, Fresh Mint, Pita" },
-      { ID: "M08", Name: "Margherita Flatbread & Caprese Salad", Cuisine: "Italian", Type: "Quick (<25m)", Prep_Mins: 15, Ingredients: "Flatbread Base, Fresh Mozzarella, Tomato Passata, Fresh Basil" },
-      { ID: "M09", Name: "Thai Green Veggie Curry & Jasmine Rice", Cuisine: "Asian", Type: "Curry & Rice", Prep_Mins: 30, Ingredients: "Green Curry Paste, Coconut Milk, Tofu, Snow Peas, Jasmine Rice" },
-      { ID: "M10", Name: "Boerenkool Stamppot & Veg Rookworst", Cuisine: "Dutch", Type: "One-Pot", Prep_Mins: 35, Ingredients: "Potatoes, Curly Kale, Vegetarian Rookworst, Butter, Milk" }
+      { ID: "B01", Name: "Masala Omelette & Toast (Yash: Besan Veggie Chilla; Xavi: Soft Scrambled Egg & Toast Strips)", Cuisine: "Breakfast", Type: "Quick (<25m)", Prep_Mins: 15, Ingredients: "Eggs, Besan (Chickpea Flour), Whole Wheat Bread, Onion, Tomato, Coriander", Active: "TRUE" },
+      { ID: "B02", Name: "Scrambled Eggs & Avocado Toast (Yash: Paneer Bhurji Bowl; Xavi: Mashed Avocado & Egg Yolk)", Cuisine: "Breakfast", Type: "Quick (<25m)", Prep_Mins: 15, Ingredients: "Eggs, Avocado, Sourdough Bread, Paneer, Butter, Cherry Tomatoes", Active: "TRUE" },
+      { ID: "B03", Name: "Boiled Eggs & Cheese Soldiers (Yash: Moong Dal Chilla & Curd; Xavi: Soft Egg & Cracker)", Cuisine: "Breakfast", Type: "Quick (<25m)", Prep_Mins: 15, Ingredients: "Eggs, Cheddar Cheese, Whole Wheat Bread, Moong Dal, Yogurt", Active: "TRUE" },
+      { ID: "B04", Name: "Veggie Cheese Omelette & Toast (Yash: Greek Yogurt, Chia & Nuts Bowl; Xavi: Soft Omelette Strips)", Cuisine: "Breakfast", Type: "Quick (<25m)", Prep_Mins: 15, Ingredients: "Eggs, Bell Pepper, Spinach, Cheese, Greek Yogurt, Chia Seeds, Mixed Nuts", Active: "TRUE" },
+      { ID: "B05", Name: "Sunny-Side Eggs & Buttered Toast (Yash: Sautéed Spinach & Paneer Skillet; Xavi: Mashed Potato & Egg)", Cuisine: "Breakfast", Type: "Quick (<25m)", Prep_Mins: 15, Ingredients: "Eggs, Bread, Butter, Baby Spinach, Paneer, Potato", Active: "TRUE" },
+      { ID: "M01", Name: "Palak Paneer & Jeera Rice", Cuisine: "Indian", Type: "Curry & Rice", Prep_Mins: 30, Ingredients: "Spinach, Paneer, Basmati Rice, Cumin, Ginger, Garlic, Cream", Active: "TRUE" },
+      { ID: "M02", Name: "Dal Tadka, Roti & Cucumber Raita", Cuisine: "Indian", Type: "Curry & Rice", Prep_Mins: 25, Ingredients: "Toor Dal, Whole Wheat Flour, Yogurt, Cucumber, Ghee", Active: "TRUE" },
+      { ID: "M03", Name: "Vegetable Hakka Noodles & Paneer Chilli", Cuisine: "Indo-Chinese", Type: "Pasta / Noodles", Prep_Mins: 25, Ingredients: "Hakka Noodles, Paneer, Bell Pepper, Cabbage, Spring Onion, Soy Sauce", Active: "TRUE" },
+      { ID: "M04", Name: "Veg Manchurian Gravy & Fried Rice", Cuisine: "Indo-Chinese", Type: "One-Pot", Prep_Mins: 35, Ingredients: "Cabbage, Carrot, Spring Onion, Basmati Rice, Soy Sauce, Garlic", Active: "TRUE" },
+      { ID: "M05", Name: "Black Bean & Sweet Potato Quesadillas", Cuisine: "Mexican", Type: "Quick (<25m)", Prep_Mins: 20, Ingredients: "Flour Tortillas, Black Beans, Sweet Potato, Cheddar, Salsa, Avocado", Active: "TRUE" },
+      { ID: "M06", Name: "Rajma Chawal & Kachumber Salad", Cuisine: "Indian", Type: "Curry & Rice", Prep_Mins: 30, Ingredients: "Kidney Beans (Rajma), Basmati Rice, Onion, Tomato, Cucumber, Lemon", Active: "TRUE" },
+      { ID: "M07", Name: "Chole, Pita & Mint Chutney", Cuisine: "Indian", Type: "Weekend Special", Prep_Mins: 40, Ingredients: "Chickpeas, Onion, Tomato, Chole Masala, Fresh Mint, Pita Bread", Active: "TRUE" },
+      { ID: "M08", Name: "Grilled Paneer Tikka & Mint Chutney Sandwich", Cuisine: "Sandwiches", Type: "Quick (<25m)", Prep_Mins: 20, Ingredients: "Paneer, Whole Wheat Bread, Mint Chutney, Bell Pepper, Onion, Butter", Active: "TRUE" },
+      { ID: "M09", Name: "Roasted Tomato Basil Soup & Grilled Cheese", Cuisine: "Salads & Soups", Type: "Quick (<25m)", Prep_Mins: 20, Ingredients: "Tomatoes, Fresh Basil, Garlic, Sourdough Bread, Cheddar Cheese, Butter", Active: "TRUE" },
+      { ID: "M10", Name: "Warm Chickpea, Feta & Avocado Protein Salad", Cuisine: "Salads & Soups", Type: "Quick (<25m)", Prep_Mins: 15, Ingredients: "Chickpeas, Feta Cheese, Avocado, Cucumber, Cherry Tomatoes, Olive Oil", Active: "TRUE" },
+      { ID: "M11", Name: "Mexican Burrito Bowl with Guacamole", Cuisine: "Mexican", Type: "One-Pot", Prep_Mins: 25, Ingredients: "Rice, Black Beans, Corn, Avocado, Salsa, Sour Cream, Cheddar", Active: "TRUE" },
+      { ID: "M12", Name: "Paneer Bhurji, Multigrain Roti & Salad", Cuisine: "Indian", Type: "Quick (<25m)", Prep_Mins: 20, Ingredients: "Paneer, Onion, Tomato, Multigrain Roti, Cucumber, Coriander", Active: "TRUE" },
+      { ID: "M13", Name: "Takeout Pizza Night", Cuisine: "Italian", Type: "Weekend Special", Prep_Mins: 5, Ingredients: "Takeout Margherita & Veggie Pizza", Active: "TRUE" }
     ];
 
     let state = {
@@ -425,9 +435,10 @@
       viewMonth: new Date().getMonth(),
       mobileTab: "today",
       rules: JSON.parse(localStorage.getItem("fh_rules") || "null") || {
-        scope: "both",
+        scope: "all",
         busyQuick: true,
         weekendSpecial: true,
+        leftoverLunch: true,
         cuisines: [...ALL_CUISINES],
         types: [...ALL_TYPES]
       },
@@ -436,6 +447,14 @@
       events: JSON.parse(localStorage.getItem("fh_events") || "null") || getSeedEvents(),
       lists: JSON.parse(localStorage.getItem("fh_lists") || "null") || getSeedLists()
     };
+
+    // Upgrade legacy saved rule scope ("both") to "all" if Breakfast meals exist
+    if (state.rules.scope === "both" && !localStorage.getItem("fh_rules_v24_migrated")) {
+      state.rules.scope = "all";
+      if (state.rules.leftoverLunch === undefined) state.rules.leftoverLunch = true;
+      ALL_CUISINES.forEach(c => { if (!state.rules.cuisines.includes(c)) state.rules.cuisines.push(c); });
+      localStorage.setItem("fh_rules_v24_migrated", "true");
+    }
 
     function getSeedEvents() {
       const today = formatDateISO(new Date());
@@ -461,13 +480,13 @@
     // ==========================================
     function autoClassifyGrocery(itemText) {
       const t = itemText.toLowerCase();
-      if (/(spinach|tomato|onion|potato|kale|broccoli|pepper|zucchini|cucumber|mint|basil|avocado|apple|banana|fruit|veg|carrot|garlic|ginger|lemon|lime|coriander|cilantro)/.test(t)) {
+      if (/(spinach|tomato|onion|potato|kale|broccoli|pepper|zucchini|cucumber|mint|basil|avocado|apple|banana|fruit|veg|carrot|garlic|ginger|lemon|lime|coriander|cilantro|cabbage|corn)/.test(t)) {
         return "Produce";
       }
-      if (/(milk|paneer|yogurt|curd|cheese|butter|cream|mozzarella|feta|cheddar|parmesan|tofu|ghee)/.test(t)) {
+      if (/(milk|paneer|yogurt|curd|cheese|butter|cream|mozzarella|feta|cheddar|parmesan|ghee|egg)/.test(t)) {
         return "Dairy & Fridge";
       }
-      if (/(bread|roti|tortilla|pita|flatbread|rice|pasta|fusilli|noodle|flour|oats|cereal|quinoa)/.test(t)) {
+      if (/(bread|roti|tortilla|pita|flatbread|rice|pasta|fusilli|noodle|flour|oats|cereal|quinoa|besan|dal|bean|chickpea|rajma)/.test(t)) {
         return "Bakery & Grains";
       }
       if (/(soap|detergent|paper|tissue|diaper|wipe|shampoo|toothpaste|trash|sponge|cleaner)/.test(t)) {
@@ -498,43 +517,73 @@
     }
 
     // ==========================================
-    // MEAL PLAN GENERATOR
+    // 3-MEAL PLAN GENERATOR & ROTATION
     // ==========================================
+    function isMealActive(m) {
+      return String(m.Active || "TRUE").toUpperCase() !== "FALSE";
+    }
+
+    function isBreakfastMeal(m) {
+      return String(m.ID || "").startsWith("B") || String(m.Cuisine || "").toLowerCase() === "breakfast";
+    }
+
     function ensureScheduleForWeek() {
       const today = new Date();
       const existingDates = new Set(state.schedule.map(s => s.Date));
       let added = false;
+      let prevDay = state.schedule.length ? state.schedule[state.schedule.length - 1] : null;
       for (let i = 0; i < 7; i++) {
         const d = new Date(today);
         d.setDate(today.getDate() + i);
         const iso = formatDateISO(d);
         if (!existingDates.has(iso)) {
-          const picked = pickMealsForDate(iso, []);
-          state.schedule.push({ Date: iso, ...picked });
+          const picked = pickMealsForDate(iso, [], prevDay);
+          const entry = { Date: iso, ...picked };
+          state.schedule.push(entry);
+          prevDay = entry;
           added = true;
         }
       }
       if (added) persistLocal();
     }
 
-    function pickMealsForDate(dateISO, recentIds) {
+    function pickMealsForDate(dateISO, recentIds, prevDaySchedule = null) {
       const d = new Date(dateISO + "T12:00:00");
-      const isWeekend = (d.getDay() === 0 || d.getDay() === 6);
+      const dow = d.getDay(); // 0=Sun, 5=Fri, 6=Sat
+      const isWeekend = (dow === 0 || dow === 6);
+      const isFriOrSat = (dow === 5 || dow === 6);
       const dayEvents = state.events.filter(e => e.start.startsWith(dateISO));
       const isBusy = dayEvents.length >= 2;
 
-      let pool = state.meals.filter(m =>
+      const activeMeals = state.meals.filter(isMealActive);
+      const breakfastPoolAll = activeMeals.filter(isBreakfastMeal);
+      const mainPoolAll = activeMeals.filter(m => !isBreakfastMeal(m));
+
+      let mainPool = mainPoolAll.filter(m =>
         state.rules.cuisines.includes(m.Cuisine) &&
         state.rules.types.includes(m.Type)
       );
-      if (pool.length === 0) pool = [...state.meals];
+      if (mainPool.length === 0) mainPool = [...mainPoolAll];
 
-      const chooseOne = (excludeIds, preferQuick, preferSpecial) => {
+      const prevDinnerObj = prevDaySchedule && prevDaySchedule.Dinner_ID
+        ? state.meals.find(m => m.ID === prevDaySchedule.Dinner_ID)
+        : null;
+      const prevBreakfastId = prevDaySchedule ? prevDaySchedule.Breakfast_ID : "";
+      const prevLunchId = prevDaySchedule ? prevDaySchedule.Lunch_ID : "";
+      const prevDinnerId = prevDaySchedule ? prevDaySchedule.Dinner_ID : "";
+
+      const chooseFrom = (pool, excludeIds, excludeCuisine, preferQuick, preferSpecial) => {
+        if (!pool.length) return null;
         let candidates = pool.filter(m => !excludeIds.includes(m.ID));
         if (candidates.length === 0) candidates = pool;
 
+        if (excludeCuisine) {
+          const diffCuisine = candidates.filter(m => m.Cuisine !== excludeCuisine);
+          if (diffCuisine.length) candidates = diffCuisine;
+        }
+
         if (preferQuick && state.rules.busyQuick) {
-          const quick = candidates.filter(m => m.Prep_Mins <= 25 || m.Type === "Quick (<25m)");
+          const quick = candidates.filter(m => Number(m.Prep_Mins) <= 20 || m.Type === "Quick (<25m)");
           if (quick.length) candidates = quick;
         } else if (preferSpecial && state.rules.weekendSpecial) {
           const special = candidates.filter(m => m.Type === "Weekend Special");
@@ -543,12 +592,61 @@
         return candidates[Math.floor(Math.random() * candidates.length)];
       };
 
-      const lunch = state.rules.scope === "both" ? chooseOne(recentIds, true, false) : null;
-      const dinner = chooseOne([...recentIds, lunch ? lunch.ID : ""], isBusy, isWeekend);
+      // 1. Breakfast
+      const includeBreakfast = state.rules.scope === "all";
+      const breakfast = includeBreakfast
+        ? chooseFrom(breakfastPoolAll, [prevBreakfastId, ...recentIds], null, false, false)
+        : null;
+
+      // 2. Lunch (check leftover carry-over from previous night's Curry & Rice or Pasta / Noodles)
+      const includeLunch = state.rules.scope === "all" || state.rules.scope === "both";
+      let lunchId = "";
+      let lunchName = "";
+      if (includeLunch) {
+        const canCarryOver = state.rules.leftoverLunch !== false &&
+          prevDinnerObj &&
+          ["Curry & Rice", "Pasta / Noodles"].includes(prevDinnerObj.Type) &&
+          !(prevLunchId && String(prevDaySchedule.Lunch_Name || "").startsWith("Leftover "));
+
+        if (canCarryOver) {
+          lunchId = prevDinnerObj.ID;
+          lunchName = `Leftover ${prevDinnerObj.Name}`;
+        } else {
+          const lunch = chooseFrom(
+            mainPool,
+            [...recentIds, prevLunchId, prevDinnerId],
+            prevDinnerObj ? prevDinnerObj.Cuisine : null,
+            true,
+            false
+          );
+          if (lunch) {
+            lunchId = lunch.ID;
+            lunchName = lunch.Name;
+          }
+        }
+      }
+
+      // 3. Dinner (Fri/Sat takeout M13 priority when weekendSpecial is active and day is not busy)
+      let dinner = null;
+      if (isFriOrSat && state.rules.weekendSpecial && !isBusy && !recentIds.includes("M13")) {
+        const takeout = mainPoolAll.find(m => m.ID === "M13");
+        if (takeout) dinner = takeout;
+      }
+      if (!dinner) {
+        dinner = chooseFrom(
+          mainPool,
+          [...recentIds, prevDinnerId, lunchId],
+          prevDinnerObj ? prevDinnerObj.Cuisine : null,
+          isBusy,
+          isWeekend
+        );
+      }
 
       return {
-        Lunch_ID: lunch ? lunch.ID : "",
-        Lunch_Name: lunch ? lunch.Name : "",
+        Breakfast_ID: breakfast ? breakfast.ID : "",
+        Breakfast_Name: breakfast ? breakfast.Name : "",
+        Lunch_ID: lunchId,
+        Lunch_Name: lunchName,
         Dinner_ID: dinner ? dinner.ID : "",
         Dinner_Name: dinner ? dinner.Name : ""
       };
@@ -557,16 +655,26 @@
     async function generateWeeklyMeals() {
       const today = new Date();
       const newSchedule = [];
-      const usedIds = [];
+      const usedMainIds = [];
+      const usedBreakfastIds = [];
+      let prevDay = null;
 
       for (let i = 0; i < 7; i++) {
         const d = new Date(today);
         d.setDate(today.getDate() + i);
         const iso = formatDateISO(d);
-        const picked = pickMealsForDate(iso, usedIds.slice(-4));
-        if (picked.Lunch_ID) usedIds.push(picked.Lunch_ID);
-        if (picked.Dinner_ID) usedIds.push(picked.Dinner_ID);
-        newSchedule.push({ Date: iso, ...picked });
+        const picked = pickMealsForDate(
+          iso,
+          [...usedBreakfastIds.slice(-2), ...usedMainIds.slice(-4)],
+          prevDay
+        );
+        if (picked.Breakfast_ID) usedBreakfastIds.push(picked.Breakfast_ID);
+        if (picked.Lunch_ID && !String(picked.Lunch_Name).startsWith("Leftover ")) usedMainIds.push(picked.Lunch_ID);
+        if (picked.Dinner_ID) usedMainIds.push(picked.Dinner_ID);
+
+        const entry = { Date: iso, ...picked };
+        newSchedule.push(entry);
+        prevDay = entry;
       }
 
       state.schedule = newSchedule;
@@ -580,11 +688,11 @@
 
     async function swapDayMeals() {
       const iso = state.selectedDate;
-      const current = state.schedule.find(s => s.Date === iso);
-      const exclude = current ? [current.Lunch_ID, current.Dinner_ID] : [];
-      const picked = pickMealsForDate(iso, exclude);
-
       const idx = state.schedule.findIndex(s => s.Date === iso);
+      const current = idx >= 0 ? state.schedule[idx] : null;
+      const exclude = current ? [current.Breakfast_ID, current.Lunch_ID, current.Dinner_ID] : [];
+      const picked = pickMealsForDate(iso, exclude, null);
+
       if (idx >= 0) state.schedule[idx] = { Date: iso, ...picked };
       else state.schedule.push({ Date: iso, ...picked });
 
@@ -600,8 +708,10 @@
       let addedCount = 0;
 
       for (const day of state.schedule.slice(0, 7)) {
+        const isLeftoverLunch = String(day.Lunch_Name || "").startsWith("Leftover ");
         const mealObjs = [
-          state.meals.find(m => m.ID === day.Lunch_ID),
+          state.meals.find(m => m.ID === day.Breakfast_ID),
+          isLeftoverLunch ? null : state.meals.find(m => m.ID === day.Lunch_ID),
           state.meals.find(m => m.ID === day.Dinner_ID)
         ].filter(Boolean);
 
@@ -682,9 +792,10 @@
         });
       }
 
-      if (sched && (sched.Dinner_Name || sched.Lunch_Name)) {
+      if (sched && (sched.Breakfast_Name || sched.Dinner_Name || sched.Lunch_Name)) {
         const mealSummary = [
-          state.rules.scope === "both" && sched.Lunch_Name ? `Lunch: ${sched.Lunch_Name}` : "",
+          state.rules.scope === "all" && sched.Breakfast_Name ? `Breakfast: ${sched.Breakfast_Name}` : "",
+          (state.rules.scope === "all" || state.rules.scope === "both") && sched.Lunch_Name ? `Lunch: ${sched.Lunch_Name}` : "",
           sched.Dinner_Name ? `Dinner: ${sched.Dinner_Name}` : ""
         ].filter(Boolean).join(" • ");
         parts.push(`
@@ -729,30 +840,45 @@
         }).join("");
       }
 
-      // Meals
+      // 3-Meal Menu
       const mealsContainer = document.getElementById("heroMealsList");
       const sched = state.schedule.find(s => s.Date === iso);
+      const breakfastObj = sched ? state.meals.find(m => m.ID === sched.Breakfast_ID || m.Name === sched.Breakfast_Name) : null;
       const lunchObj = sched ? state.meals.find(m => m.ID === sched.Lunch_ID || m.Name === sched.Lunch_Name) : null;
       const dinnerObj = sched ? state.meals.find(m => m.ID === sched.Dinner_ID || m.Name === sched.Dinner_Name) : null;
 
       const renderMealBox = (label, mealObj, fallbackName) => {
-        const title = mealObj ? mealObj.Name : (fallbackName || "Not planned yet");
-        const meta = mealObj ? `${mealObj.Cuisine} • ${mealObj.Prep_Mins}m` : "Tap Swap to assign";
-        const ing = mealObj ? mealObj.Ingredients : "";
+        const displayTitle = fallbackName || (mealObj ? mealObj.Name : "Not planned yet");
+        const isLeftover = String(displayTitle).startsWith("Leftover ");
+        const meta = isLeftover
+          ? "Reheat • 10m"
+          : (mealObj ? `${mealObj.Cuisine} • ${mealObj.Prep_Mins}m` : "Tap Swap to assign");
+        const ing = isLeftover ? "Leftover from previous dinner" : (mealObj ? mealObj.Ingredients : "");
         return `
           <div class="bg-white/10 rounded-xl p-3 border border-white/10">
             <div class="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-emerald-300 mb-1">
               <span>${label}</span>
               <span class="text-slate-300 font-medium normal-case">${meta}</span>
             </div>
-            <div class="text-sm font-bold text-white leading-snug">${escapeHtml(title)}</div>
+            <div class="text-sm font-bold text-white leading-snug">${escapeHtml(displayTitle)}</div>
             ${ing ? `<div class="text-[11px] text-slate-300 mt-1 line-clamp-2">${escapeHtml(ing)}</div>` : ""}
           </div>
         `;
       };
 
-      mealsContainer.innerHTML = (state.rules.scope === "both" ? renderMealBox("Lunch", lunchObj, sched?.Lunch_Name) : "")
-        + renderMealBox("Dinner", dinnerObj, sched?.Dinner_Name);
+      const cards = [];
+      if (state.rules.scope === "all") {
+        cards.push(renderMealBox("Breakfast", breakfastObj, sched?.Breakfast_Name));
+      }
+      if (state.rules.scope === "all" || state.rules.scope === "both") {
+        cards.push(renderMealBox("Lunch", lunchObj, sched?.Lunch_Name));
+      }
+      cards.push(renderMealBox("Dinner", dinnerObj, sched?.Dinner_Name));
+
+      mealsContainer.className = cards.length === 3
+        ? "grid grid-cols-1 sm:grid-cols-3 gap-2.5"
+        : (cards.length === 2 ? "grid grid-cols-1 sm:grid-cols-2 gap-2.5" : "grid grid-cols-1 gap-2.5");
+      mealsContainer.innerHTML = cards.join("");
     }
 
     function renderCalendar() {
@@ -761,7 +887,6 @@
       const firstDay = new Date(year, month, 1);
       document.getElementById("calendarMonthTitle").textContent = firstDay.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
-      // Monday-first offset
       let startOffset = firstDay.getDay() - 1;
       if (startOffset < 0) startOffset = 6;
       const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -777,7 +902,7 @@
         const isToday = iso === todayISO;
         const isSelected = iso === state.selectedDate;
         const dayEvents = state.events.filter(e => e.start.startsWith(iso));
-        const hasMeal = state.schedule.some(s => s.Date === iso && s.Dinner_Name);
+        const hasMeal = state.schedule.some(s => s.Date === iso && (s.Dinner_Name || s.Lunch_Name || s.Breakfast_Name));
 
         let ringClass = isSelected
           ? "ring-2 ring-sky-500 bg-sky-50/70"
@@ -809,13 +934,16 @@
         const d = new Date(day.Date + "T12:00:00");
         const dayName = d.toLocaleDateString("en-US", { weekday: "short", day: "numeric" });
         const isSelected = day.Date === state.selectedDate;
+        const showB = state.rules.scope === "all" && day.Breakfast_Name;
+        const showL = (state.rules.scope === "all" || state.rules.scope === "both") && day.Lunch_Name;
         return `
           <div onclick="selectDate('${day.Date}')" class="cursor-pointer flex items-center justify-between p-2.5 rounded-xl border transition ${isSelected ? "border-emerald-500 bg-emerald-50/50" : "border-slate-200/70 hover:bg-slate-50"}">
             <div class="flex items-center gap-3 min-w-0">
               <span class="text-xs font-bold w-14 shrink-0 text-slate-500">${dayName}</span>
-              <div class="truncate">
-                <div class="text-xs sm:text-sm font-semibold truncate">${escapeHtml(day.Dinner_Name || "—")}</div>
-                ${state.rules.scope === "both" && day.Lunch_Name ? `<div class="text-[11px] text-slate-500 truncate">Lunch: ${escapeHtml(day.Lunch_Name)}</div>` : ""}
+              <div class="truncate space-y-0.5">
+                ${showB ? `<div class="text-[11px] text-amber-700/90 truncate"><span class="font-semibold">B:</span> ${escapeHtml(day.Breakfast_Name)}</div>` : ""}
+                ${showL ? `<div class="text-[11px] text-slate-500 truncate"><span class="font-semibold">L:</span> ${escapeHtml(day.Lunch_Name)}</div>` : ""}
+                <div class="text-xs sm:text-sm font-semibold truncate"><span class="text-emerald-700 font-bold text-xs">D:</span> ${escapeHtml(day.Dinner_Name || "—")}</div>
               </div>
             </div>
             <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 shrink-0"></i>
@@ -825,19 +953,16 @@
     }
 
     function renderLists() {
-      // Cleanup hint label
       const cleanupText = state.cleanupMode === "midnight" ? "Clears midnight" : (state.cleanupMode === "24h" ? "Clears in 24h" : "Manual clear");
       document.getElementById("cleanupHintTodo").textContent = cleanupText;
 
-      // To-Dos
       const todos = state.lists.filter(i => i.List_Type === "todo");
       const activeTodos = todos.filter(i => !i.Done);
       document.getElementById("todoCountBadge").textContent = activeTodos.length;
 
-      const sortedTodos = todos;
-      document.getElementById("todoListEl").innerHTML = sortedTodos.length === 0
+      document.getElementById("todoListEl").innerHTML = todos.length === 0
         ? `<p class="text-xs text-slate-400 py-4 text-center">All caught up!</p>`
-        : sortedTodos.map(item => `
+        : todos.map(item => `
           <div class="flex items-center justify-between gap-2 p-2 rounded-xl hover:bg-slate-50 group">
             <label class="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0">
               <input type="checkbox" ${item.Done ? "checked" : ""} onchange="toggleItem('${item.ID}')"
@@ -850,7 +975,6 @@
           </div>
         `).join("");
 
-      // Groceries (Grouped automatically by Aisle)
       const groceries = state.lists.filter(i => i.List_Type === "grocery");
       const activeGroceries = groceries.filter(i => !i.Done);
       document.getElementById("groceryCountBadge").textContent = activeGroceries.length;
@@ -1003,6 +1127,7 @@
       document.getElementById("ruleMealScope").value = state.rules.scope;
       document.getElementById("ruleBusyQuick").checked = state.rules.busyQuick;
       document.getElementById("ruleWeekendSpecial").checked = state.rules.weekendSpecial;
+      document.getElementById("ruleLeftoverLunch").checked = state.rules.leftoverLunch !== false;
       renderChips();
       renderPoolModalList();
       document.getElementById("mealRulesModal").classList.remove("hidden");
@@ -1029,27 +1154,51 @@
     }
 
     function renderPoolModalList() {
-      document.getElementById("poolCount").textContent = state.meals.length;
-      document.getElementById("mealPoolList").innerHTML = state.meals.map(m => `
-        <div class="p-2 flex items-center justify-between">
-          <div>
-            <span class="font-semibold">${escapeHtml(m.Name)}</span>
-            <span class="text-slate-400 ml-1">(${m.Cuisine} • ${m.Type})</span>
+      const activeCount = state.meals.filter(isMealActive).length;
+      document.getElementById("poolCount").textContent = activeCount;
+      document.getElementById("mealPoolList").innerHTML = state.meals.map(m => {
+        const active = isMealActive(m);
+        return `
+          <div class="p-2 flex items-center justify-between gap-2 ${active ? "" : "opacity-50 bg-slate-50"}">
+            <label class="flex items-center gap-2 cursor-pointer min-w-0 flex-1">
+              <input type="checkbox" ${active ? "checked" : ""} onchange="toggleDishActive('${m.ID}')" class="rounded text-emerald-600 shrink-0" />
+              <div class="truncate">
+                <span class="font-semibold">${escapeHtml(m.Name)}</span>
+                <span class="text-slate-400 ml-1">(${m.ID} • ${m.Cuisine} • ${m.Type})</span>
+              </div>
+            </label>
+            <span class="text-slate-400 shrink-0">${m.Prep_Mins}m</span>
           </div>
-          <span class="text-slate-400">${m.Prep_Mins}m</span>
-        </div>
-      `).join("");
+        `;
+      }).join("");
+    }
+
+    async function toggleDishActive(id) {
+      const dish = state.meals.find(m => String(m.ID) === String(id));
+      if (!dish) return;
+      const nextActive = !isMealActive(dish);
+      dish.Active = nextActive ? "TRUE" : "FALSE";
+      persistLocal();
+      renderPoolModalList();
+
+      if (state.scriptUrl) {
+        await callBackend("toggleMealActive", { id, active: nextActive });
+      }
     }
 
     async function submitNewDish(e) {
       e.preventDefault();
+      const cuisine = document.getElementById("dishCuisine").value;
+      const isBreakfast = cuisine === "Breakfast";
+      const prefix = isBreakfast ? "B" : "M";
       const dish = {
-        ID: "M" + Date.now(),
+        ID: prefix + Math.floor(100 + Math.random() * 900),
         Name: document.getElementById("dishName").value.trim(),
-        Cuisine: document.getElementById("dishCuisine").value,
+        Cuisine: cuisine,
         Type: document.getElementById("dishType").value,
         Prep_Mins: document.getElementById("dishType").value.includes("Quick") ? 20 : 35,
-        Ingredients: document.getElementById("dishIngredients").value.trim()
+        Ingredients: document.getElementById("dishIngredients").value.trim(),
+        Active: "TRUE"
       };
       state.meals.unshift(dish);
       persistLocal();
@@ -1066,6 +1215,7 @@
       state.rules.scope = document.getElementById("ruleMealScope").value;
       state.rules.busyQuick = document.getElementById("ruleBusyQuick").checked;
       state.rules.weekendSpecial = document.getElementById("ruleWeekendSpecial").checked;
+      state.rules.leftoverLunch = document.getElementById("ruleLeftoverLunch").checked;
       persistLocal();
       closeModal("mealRulesModal");
       generateWeeklyMeals();
@@ -1324,7 +1474,7 @@
     updateSyncBadge();
     renderAll();
     if (state.scriptUrl) syncWithBackend();
-    setInterval(() => { if (state.scriptUrl) syncWithBackend(); }, 10 * 60 * 1000); // Auto-refresh every 10m for TV
+    setInterval(() => { if (state.scriptUrl) syncWithBackend(); }, 10 * 60 * 1000);
   </script>
 </body>
 </html>
